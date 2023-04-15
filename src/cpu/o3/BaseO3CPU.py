@@ -119,7 +119,7 @@ class BaseO3CPU(BaseCPU):
         2, "Rename to " "Issue/Execute/Writeback delay"
     )
     issueToExecuteDelay = Param.Cycles(
-        1, "Issue to execute delay (internal " "to the IEW stage)"
+        5, "Issue to execute delay (internal " "to the IEW stage)"
     )
     dispatchWidth = Param.Unsigned(8, "Dispatch width")
     issueWidth = Param.Unsigned(8, "Issue width")

@@ -46,6 +46,8 @@
 #include "cpu/o3/iew.hh"
 
 #include <queue>
+#include <list>
+
 
 #include "cpu/checker/cpu.hh"
 #include "cpu/o3/dyn_inst.hh"
@@ -56,6 +58,7 @@
 #include "debug/Drain.hh"
 #include "debug/IEW.hh"
 #include "debug/O3PipeView.hh"
+#include "debug/DBGLD.hh"
 #include "params/BaseO3CPU.hh"
 
 namespace gem5
@@ -94,6 +97,11 @@ IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params)
              "\tincrease MaxWidth in src/cpu/o3/limits.hh\n",
              wbWidth, static_cast<int>(MaxWidth));
 
+   
+
+
+
+
     _status = Active;
     exeStatus = Running;
     wbStatus = Idle;
@@ -118,6 +126,24 @@ std::string
 IEW::name() const
 {
     return cpu->name() + ".iew";
+}
+
+void IEW::spec_sched_wakeup_task(){
+	
+	std::list<std::pair<DynInstPtr,int>>::iterator it =  spec_sched_wakeup.begin();
+	
+
+	while(it != spec_sched_wakeup.end()) {
+		if(it->second ==0){
+			//instQueue.wakeDependents(it->first);
+			it = spec_sched_wakeup.erase(it);
+		 } else {
+			it->second = it->second -1;
+			it++;
+		 }
+	}
+			
+	 
 }
 
 void
@@ -1211,6 +1237,22 @@ IEW::executeInsts()
             } else if (inst->isLoad()) {
                 // Loads will mark themselves as executed, and their writeback
                 // event adds the instruction to the queue to commit
+
+    		//DPRINTF(DBGLD, "Executing load PC %x \n",
+            	//inst->staticInst->EA);
+
+
+       		//int dependents = instQueue.wakeDependents(inst);
+                //if (dependents) {
+                //	iewStats.producerInst[tid]++;
+                //	iewStats.consumerInst[tid]+= dependents;
+            	//}
+
+		
+	
+		spec_sched_wakeup.push_back(std::make_pair(inst, 2));
+		
+		
                 fault = ldstQueue.executeLoad(inst);
 
                 if (inst->isTranslationDelayed() &&
@@ -1390,6 +1432,12 @@ IEW::writebackInsts()
         DynInstPtr inst = toCommit->insts[inst_num];
         ThreadID tid = inst->threadNumber;
 
+	//if(inst->isLoad()) {
+	//	DPRINTF(DBGLD, "Finished load PC %x \n",
+        //    	inst->staticInst->EA);
+	//}
+
+
         DPRINTF(IEW, "Sending instructions to commit, [sn:%lli] PC %s.\n",
                 inst->seqNum, inst->pcState());
 
@@ -1461,10 +1509,12 @@ IEW::tick()
 
         writebackInsts();
 
+	spec_sched_wakeup_task();
+
         // Have the instruction queue try to schedule any ready instructions.
         // (In actuality, this scheduling is for instructions that will
         // be executed next cycle.)
-        instQueue.scheduleReadyInsts();
+        instQueue.scheduleReadyInsts(); //MK Pay Attention here
 
         // Also should advance its own time buffers if the stage ran.
         // Not the best place for it, but this works (hopefully).

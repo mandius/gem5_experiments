@@ -57,6 +57,8 @@
 #include "debug/LSQ.hh"
 #include "debug/Writeback.hh"
 #include "params/BaseO3CPU.hh"
+#include "debug/DBGLD.hh"
+
 
 namespace gem5
 {
@@ -843,9 +845,13 @@ LSQ::pushRequest(const DynInstPtr& inst, bool isLoad, uint8_t *data,
                 inst->reqToVerify = std::make_shared<Request>(*request->req());
             }
             Fault fault;
-            if (isLoad)
+            if (isLoad){
+		
+		//DPRINTF(DBGLD, "Executing load PC %x \n",
+            	//request->getAddr());
+
                 fault = read(request, inst->lqIdx);
-            else
+            }else
                 fault = write(request, data, inst->sqIdx);
             // inst->getFault() may have the first-fault of a
             // multi-access split request at this point.
@@ -1323,6 +1329,12 @@ void
 LSQ::SingleDataRequest::sendPacketToCache()
 {
     assert(_numOutstandingPackets == 0);
+
+    DPRINTF(DBGLD, "Executing load PC %x \n",
+           _packets.at(0)->getAddr());
+
+
+
     if (lsqUnit()->trySendPacket(isLoad(), _packets.at(0)))
         _numOutstandingPackets = 1;
 }

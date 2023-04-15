@@ -43,6 +43,8 @@
 
 #include <queue>
 #include <set>
+#include <utility>
+#include <list>
 
 #include "base/statistics.hh"
 #include "cpu/o3/comm.hh"
@@ -125,6 +127,8 @@ class IEW
     /** To probe when instruction execution is complete. */
     ProbePointArg<DynInstPtr> *ppToCommit;
 
+    std::list<std::pair<DynInstPtr,int>> spec_sched_wakeup;
+
   public:
     /** Constructs a IEW with the given parameters. */
     IEW(CPU *_cpu, const BaseO3CPUParams &params);
@@ -167,6 +171,9 @@ class IEW
 
     /** Squashes instructions in IEW for a specific thread. */
     void squash(ThreadID tid);
+
+
+    void spec_sched_wakeup_task();
 
     /** Wakes all dependents of a completed instruction. */
     void wakeDependents(const DynInstPtr &inst);

@@ -54,6 +54,7 @@
 #include "debug/O3PipeView.hh"
 #include "mem/packet.hh"
 #include "mem/request.hh"
+#include "debug/DBGLD.hh"
 
 namespace gem5
 {
@@ -175,6 +176,11 @@ LSQUnit::completeDataAccess(PacketPtr pkt)
                 request->mainPacket()->setHtmTransactionFailedInCache(
                     pkt->getHtmTransactionFailedInCacheRC() );
             }
+
+	   if(inst->isLoad()) {
+		 DPRINTF(DBGLD, "Finishing load PC %x \n",
+            	  pkt->getAddr());
+	    }
 
             writeback(inst, request->mainPacket());
             if (inst->isStore() || inst->isAtomic()) {

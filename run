@@ -1,0 +1,2 @@
+build/X86/gem5.opt --debug-flags=DBGLD --debug-flags=O3PipeView configs/ECE_752_project/two_level.py   configs/ECE_752_project/test 
+grep -e simTicks   m5out/stats.txt
