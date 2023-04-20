@@ -1,4 +1,6 @@
 #--debug-flags=O3PipeView
+#
+#Run file for the benchmarks
 
 rm -rf log
 touch log
