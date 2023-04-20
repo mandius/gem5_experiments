@@ -66,7 +66,10 @@ default_binary = os.path.join(
 )
 
 # Binary to execute
-SimpleOpts.add_option("binary", nargs="?", default=default_binary)
+SimpleOpts.add_option("benchmark", nargs="?", default="bzip2")
+
+#Add option for Issue to Execute Delay
+SimpleOpts.add_option("I2E_delay", nargs="?", default="1")
 
 # Finalize the arguments and grab the args so we can pass it on to our objects
 args = SimpleOpts.parse_args()
@@ -85,6 +88,8 @@ system.mem_ranges = [AddrRange("1GB")]  # Create an address range
 
 # Create an O3 CPU
 system.cpu = O3CPU()
+system.cpu.issueToExecuteDelay = args.I2E_delay
+
 
 # Create an L1 instruction and data cache
 system.cpu.icache = L1ICache(args)
@@ -126,7 +131,7 @@ system.mem_ctrl.dram = DDR3_1600_8x8()
 system.mem_ctrl.dram.range = system.mem_ranges[0]
 system.mem_ctrl.port = system.membus.mem_side_ports
 
-system.workload = SEWorkload.init_compatible(args.binary)
+
 
 # Create a process for a simple "Hello World" application
 #process = Process()
@@ -134,7 +139,18 @@ system.workload = SEWorkload.init_compatible(args.binary)
 # cmd is a list which begins with the executable (like argv)
 #process.cmd = [args.binary]
 # Set the cpu to use the process as its workload and create thread contexts
-system.cpu.workload = Mybench.bzip2
+if args.benchmark == 'bzip2':
+	process = Mybench.bzip2
+elif args.benchmark == 'test':
+	process = Mybench.test
+
+
+system.workload = SEWorkload.init_compatible(process.executable)
+system.cpu.workload = process
+
+
+
+	
 system.cpu.createThreads()
 
 # set up the root SimObject and start the simulation
