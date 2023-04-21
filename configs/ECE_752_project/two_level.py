@@ -141,14 +141,19 @@ system.mem_ctrl.port = system.membus.mem_side_ports
 # Set the cpu to use the process as its workload and create thread contexts
 if args.benchmark == 'bzip2':
 	process = Mybench.bzip2
+elif args.benchmark == 'libquantum':
+	process = Mybench.libquantum
 elif args.benchmark == 'test':
 	process = Mybench.test
+
 
 
 system.workload = SEWorkload.init_compatible(process.executable)
 system.cpu.workload = process
 
-
+print("Process Information:")
+print(process.cmd)
+print("\n")
 
 	
 system.cpu.createThreads()

@@ -3,10 +3,10 @@
 rm -rf log
 touch log
 
-build/X86/gem5.opt  --debug-flags=Spec_Wakeup configs/ECE_752_project/two_level.py   bzip2  2
+build/X86/gem5.fast    configs/ECE_752_project/two_level.py   libquantum  2
 echo "bzip2_I2E_delay_2" >> log
 grep -e system.cpu.ipc   m5out/stats.txt >> log
 
-build/X86/gem5.opt  --debug-flags=Spec_Wakeup configs/ECE_752_project/two_level.py   bzip2  5
-echo "bzip2_I2E_delay_5" >> log
-grep -e system.cpu.ipc   m5out/stats.txt >> log
+#build/X86/gem5.opt  --debug-flags=Spec_Wakeup configs/ECE_752_project/two_level.py   bzip2  5
+#echo "bzip2_I2E_delay_5" >> log
+#grep -e system.cpu.ipc   m5out/stats.txt >> log
