@@ -103,8 +103,7 @@ class L1DCache(L1Cache):
     tag_latency = 4 ## TODO: For calculating the total latency should we add them ?
     data_latency = 5
     response_latency = 5
-    banked = "True" #added banking and number of banks
-    num_banks = 2 
+    
 
     SimpleOpts.add_option(
         "--l1d_size", help="L1 data cache size. Default: %s" % size

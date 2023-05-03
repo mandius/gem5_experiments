@@ -60,6 +60,9 @@
 #include "debug/O3PipeView.hh"
 #include "debug/DBGLD.hh"
 #include "params/BaseO3CPU.hh"
+#include "debug/Spec_Wakeup.hh"
+#include "debug/Spec_Wakeup2.hh"
+#include "debug/DBGCUR.hh"
 
 namespace gem5
 {
@@ -97,7 +100,7 @@ IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params)
              "\tincrease MaxWidth in src/cpu/o3/limits.hh\n",
              wbWidth, static_cast<int>(MaxWidth));
 
-   
+
 
 
 
@@ -120,6 +123,13 @@ IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params)
     updateLSQNextCycle = false;
 
     skidBufferMax = (renameToIEWDelay + 1) * params.renameWidth;
+  
+    if(params.spec_sched == true) {
+	spec_sched=1;
+    } else {
+	spec_sched=0;
+    }
+
 }
 
 std::string
@@ -134,15 +144,17 @@ void IEW::spec_sched_wakeup_task(){
 	
 
 	while(it != spec_sched_wakeup.end()) {
-		if(it->second ==0){
-			//instQueue.wakeDependents(it->first);
+
+	
+		if((it->second ==0)&&(!it->first->isSquashed())){
+		        instQueue.SpecSchedwakeDependents(it->first);
 			it = spec_sched_wakeup.erase(it);
-		 } else {
+		
+		}else {
 			it->second = it->second -1;
-			it++;
-		 }
+			it++;		
+		}
 	}
-			
 	 
 }
 
@@ -909,7 +921,7 @@ IEW::dispatchInsts(ThreadID tid)
         skidBuffer[tid] : insts[tid];
 
     int insts_to_add = insts_to_dispatch.size();
-
+   
     DynInstPtr inst;
     bool add_to_iq = false;
     int dis_num_inst = 0;
@@ -1110,6 +1122,7 @@ IEW::dispatchInsts(ThreadID tid)
 
         insts_to_dispatch.pop();
 
+	inst->issue_tick = curTick()/1000;
         toRename->iewInfo[tid].dispatched++;
 
         ++iewStats.dispatchedInsts;
@@ -1185,9 +1198,9 @@ IEW::executeInsts()
 
         DynInstPtr inst = instQueue.getInstToExecute();
 
-        DPRINTF(IEW, "Execute: Processing PC %s, [tid:%i] [sn:%llu].\n",
-                inst->pcState(), inst->threadNumber,inst->seqNum);
-
+	DPRINTF(IEW, "Execute: Processing PC %s, [tid:%i] [sn:%llu].\n",
+		inst->pcState(), inst->threadNumber,inst->seqNum);
+	
         // Notify potential listeners that this instruction has started
         // executing
         ppExecute->notify(inst);
@@ -1237,20 +1250,6 @@ IEW::executeInsts()
             } else if (inst->isLoad()) {
                 // Loads will mark themselves as executed, and their writeback
                 // event adds the instruction to the queue to commit
-
-    		//DPRINTF(DBGLD, "Executing load PC %x \n",
-            	//inst->staticInst->EA);
-
-
-       		//int dependents = instQueue.wakeDependents(inst);
-                //if (dependents) {
-                //	iewStats.producerInst[tid]++;
-                //	iewStats.consumerInst[tid]+= dependents;
-            	//}
-
-		
-	
-		spec_sched_wakeup.push_back(std::make_pair(inst, 2));
 		
 		
                 fault = ldstQueue.executeLoad(inst);
@@ -1432,10 +1431,6 @@ IEW::writebackInsts()
         DynInstPtr inst = toCommit->insts[inst_num];
         ThreadID tid = inst->threadNumber;
 
-	//if(inst->isLoad()) {
-	//	DPRINTF(DBGLD, "Finished load PC %x \n",
-        //    	inst->staticInst->EA);
-	//}
 
 
         DPRINTF(IEW, "Sending instructions to commit, [sn:%lli] PC %s.\n",
@@ -1446,6 +1441,8 @@ IEW::writebackInsts()
         // instruction.
         ppToCommit->notify(inst);
 
+
+
         // Some instructions will be sent to commit without having
         // executed because they need commit to handle them.
         // E.g. Strictly ordered loads have not actually executed when they
@@ -1453,7 +1450,21 @@ IEW::writebackInsts()
         // when it's ready to execute the strictly ordered load.
         if (!inst->isSquashed() && inst->isExecuted() &&
                 inst->getFault() == NoFault) {
+
+
+	    //MK: Tracking for individual instructions when they were Issued, Executed and Written Back;
+
+
+	    inst->writeback_tick  = curTick()/1000;
+ 
+	    inst->issue_to_execute_cycles = inst->exec_tick - inst->issue_tick;
+	    inst->execute_to_writeback_cycles = inst->writeback_tick - inst->exec_tick;
+
+	    DPRINTF(DBGLD, "[LATENCYPRINT] Instruction=%lli isMemref =%0d :: isLoad =%0d :: op_latency=%0d :: opClass =%0d I_to_E_Latency=%ld, E_to_W_latency=%ld\n" , inst->seqNum, inst->isMemRef() , inst->isLoad(), inst->opLatency, inst->opClass(), inst->issue_to_execute_cycles, inst->execute_to_writeback_cycles );
+
+
             int dependents = instQueue.wakeDependents(inst);
+	    
 
             for (int i = 0; i < inst->numDestRegs(); i++) {
                 // Mark register as ready if not pinned
@@ -1462,7 +1473,7 @@ IEW::writebackInsts()
                     DPRINTF(IEW,"Setting Destination Register %i (%s)\n",
                             inst->renamedDestIdx(i)->index(),
                             inst->renamedDestIdx(i)->className());
-                    scoreboard->setReg(inst->renamedDestIdx(i));
+                    scoreboard->setReg(inst->renamedDestIdx(i)); 
                 }
             }
 
@@ -1486,7 +1497,7 @@ IEW::tick()
 
     ldstQueue.tick();
 
-    sortInsts();
+    sortInsts(); 
 
     // Free function units marked as being freed this cycle.
     fuPool->processFreeUnits();
@@ -1508,13 +1519,16 @@ IEW::tick()
         executeInsts();
 
         writebackInsts();
-
-	spec_sched_wakeup_task();
+	
+	if(spec_sched == 1){
+		//MK: Adding spec sched wakeup task to be executed on every tick
+		spec_sched_wakeup_task();
+	}
 
         // Have the instruction queue try to schedule any ready instructions.
         // (In actuality, this scheduling is for instructions that will
         // be executed next cycle.)
-        instQueue.scheduleReadyInsts(); //MK Pay Attention here
+        instQueue.scheduleReadyInsts(); 
 
         // Also should advance its own time buffers if the stage ran.
         // Not the best place for it, but this works (hopefully).

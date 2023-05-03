@@ -238,6 +238,10 @@ class InstructionQueue
     /** Wakes all dependents of a completed instruction. */
     int wakeDependents(const DynInstPtr &completed_inst);
 
+    /** Speculatively wakes up the dependents **/
+    int SpecSchedwakeDependents(const DynInstPtr &inst);
+
+
     /** Adds a ready memory instruction to the ready list. */
     void addReadyMemInst(const DynInstPtr &ready_inst);
 
@@ -560,6 +564,12 @@ class InstructionQueue
         statistics::Scalar intAluAccesses;
         statistics::Scalar fpAluAccesses;
         statistics::Scalar vecAluAccesses;
+	
+	//statistics::Scalar spec_woken_insts;
+	//statistics::Scalar spec_squash_insts;
+	//statistics::Scalar successful_spec_insts;
+
+
     } iqIOStats;
 };
 

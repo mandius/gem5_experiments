@@ -71,6 +71,10 @@ SimpleOpts.add_option("benchmark", nargs="?", default="bzip2")
 #Add option for Issue to Execute Delay
 SimpleOpts.add_option("I2E_delay", nargs="?", default="1")
 
+#Adding an option for the max number of instructions to be executed per thread.
+SimpleOpts.add_option("maxinsts", nargs="?", default="1000000")
+
+
 # Finalize the arguments and grab the args so we can pass it on to our objects
 args = SimpleOpts.parse_args()
 
@@ -89,6 +93,12 @@ system.mem_ranges = [AddrRange("1GB")]  # Create an address range
 # Create an O3 CPU
 system.cpu = O3CPU()
 system.cpu.issueToExecuteDelay = args.I2E_delay
+system.cpu.spec_sched = "False"
+
+### Fixed parameters according to the configuration
+system.cpu.LQEntries = 72
+system.cpu.SQEntries = 48
+system.cpu.max_insts_any_thread = args.maxinsts;
 
 
 # Create an L1 instruction and data cache
@@ -143,6 +153,14 @@ if args.benchmark == 'bzip2':
 	process = Mybench.bzip2
 elif args.benchmark == 'libquantum':
 	process = Mybench.libquantum
+elif args.benchmark == 'gamess':
+	process = Mybench.gamess
+elif args.benchmark == 'gobmk':
+	process = Mybench.gobmk
+elif args.benchmark == 'GemsFDTD':
+	process = Mybench.GemsFDTD
+elif args.benchmark == 'soplex':
+	process = Mybench.soplex
 elif args.benchmark == 'test':
 	process = Mybench.test
 

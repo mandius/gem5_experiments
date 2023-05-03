@@ -61,8 +61,17 @@ DynInst::DynInst(const Arrays &arrays, const StaticInstPtr &static_inst,
       _prevDestIdx(arrays.prevDestIdx), _srcIdx(arrays.srcIdx),
       _readySrcIdx(arrays.readySrcIdx), macroop(_macroop)
 {
-    std::fill(_readySrcIdx, _readySrcIdx + (numSrcs() + 7) / 8, 0);
+    spec_sched_wakeup=0;
+    
+    //MK An Array to track loads on which this instruction was found to be dependent, This is only some debug information 
+    dependent_load_seqNum = (InstSeqNum*)malloc(sizeof(InstSeqNum)*numSrcs());
 
+    for(int i=0; i< numSrcs(); i++){
+	dependent_load_seqNum[i] = -1;
+    }
+
+    std::fill(_readySrcIdx, _readySrcIdx + (numSrcs() + 7) / 8, 0);
+    
     status.reset();
 
     instFlags.reset();
@@ -301,6 +310,15 @@ DynInst::markSrcRegReady()
         setCanIssue();
     }
 }
+
+void DynInst::unmarkSrcRegReady(int num)
+{
+
+  readyRegs = readyRegs - num;
+}
+
+
+
 
 void
 DynInst::markSrcRegReady(RegIndex src_idx)

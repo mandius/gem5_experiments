@@ -70,6 +70,9 @@ if not env['CONF']['USE_NULL_ISA']:
     DebugFlag('StoreSet')
     DebugFlag('Writeback')
     DebugFlag('DBGLD')
+    DebugFlag('Spec_Wakeup')
+    DebugFlag('Spec_Wakeup2')
+    DebugFlag('DBGCUR')
 
     CompoundFlag('O3CPUAll', [ 'Fetch', 'Decode', 'Rename', 'IEW', 'Commit',
         'IQ', 'ROB', 'FreeList', 'LSQ', 'LSQUnit', 'StoreSet', 'MemDepUnit',

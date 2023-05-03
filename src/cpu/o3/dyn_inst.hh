@@ -63,6 +63,9 @@
 #include "cpu/static_inst.hh"
 #include "cpu/translation.hh"
 #include "debug/HtmCpu.hh"
+#include "debug/Spec_Wakeup.hh"
+#include "debug/Spec_Wakeup2.hh"
+#include "debug/DBGLD.hh"
 
 namespace gem5
 {
@@ -81,6 +84,18 @@ class DynInst : public ExecContext, public RefCounted
   public:
     // The list of instructions iterator type.
     typedef typename std::list<DynInstPtr>::iterator ListIt;
+
+
+    ///MK:: Book Keeping variables for the Spec Wakeup of Dependents for Load
+    uint64_t exec_tick;
+    uint64_t issue_tick;
+    uint64_t writeback_tick;
+    uint64_t issue_to_execute_cycles;
+    uint64_t execute_to_writeback_cycles;  
+    uint64_t opLatency;
+
+   
+    InstSeqNum* dependent_load_seqNum = NULL;
 
     struct Arrays
     {
@@ -233,7 +248,10 @@ class DynInst : public ExecContext, public RefCounted
     PhysRegIdPtr *_srcIdx;
 
     // Whether or not the source register is ready, one bit per register.
-    uint8_t *_readySrcIdx;
+    uint8_t *_readySrcIdx; 
+    size_t  spec_sched_wakeup;
+    
+    
 
   public:
     size_t numSrcs() const { return _numSrcs; }
@@ -312,6 +330,44 @@ class DynInst : public ExecContext, public RefCounted
         replaceBits(byte, idx % 8, ready ? 1 : 0);
     }
 
+    void
+    set_spec_sched_wakeup(InstSeqNum load_seq_num)
+    {   
+        dependent_load_seqNum[spec_sched_wakeup++] =  load_seq_num;
+    }
+
+    void
+    unset_spec_sched_wakeup()
+    {   
+	spec_sched_wakeup--;
+    }
+
+    int
+    getSrcRegReady()
+    {
+    
+    	return readyRegs ;
+        
+    }
+
+    int get_spec_sched_wakeup()
+    {
+	return spec_sched_wakeup;	
+    }
+
+ 
+    void reset_spec_sched_wakeup_state()
+    {
+	unmarkSrcRegReady(spec_sched_wakeup);
+	spec_sched_wakeup=0;
+	clearCanIssue();	
+    }
+
+   
+
+
+
+  
     /** The thread this instruction is from. */
     ThreadID threadNumber = 0;
 
@@ -725,6 +781,9 @@ class DynInst : public ExecContext, public RefCounted
 
     /** Marks a specific register as ready. */
     void markSrcRegReady(RegIndex src_idx);
+
+    //Unmark Source Regs
+    void unmarkSrcRegReady(int num);
 
     /** Sets this instruction as completed. */
     void setCompleted() { status.set(Completed); }

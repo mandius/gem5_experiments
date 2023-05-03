@@ -127,9 +127,15 @@ class IEW
     /** To probe when instruction execution is complete. */
     ProbePointArg<DynInstPtr> *ppToCommit;
 
-    std::list<std::pair<DynInstPtr,int>> spec_sched_wakeup;
+    
+    
 
   public:
+
+
+    int spec_sched;
+    std::list<std::pair<DynInstPtr,int>> spec_sched_wakeup;
+
     /** Constructs a IEW with the given parameters. */
     IEW(CPU *_cpu, const BaseO3CPUParams &params);
 

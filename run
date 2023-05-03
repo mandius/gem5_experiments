@@ -5,10 +5,41 @@
 rm -rf log
 touch log
 
-build/X86/gem5.fast    configs/ECE_752_project/two_level.py   libquantum  2
-echo "bzip2_I2E_delay_2" >> log
-grep -e system.cpu.ipc   m5out/stats.txt >> log
+#build/X86/gem5.opt  --debug-flags=IEW  configs/ECE_752_project/two_level.py   libquantum  1 
+#echo "libquantum `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
+#
+#build/X86/gem5.opt  --debug-flags=IEW configs/ECE_752_project/two_level.py   libquantum  5
+#echo "libquantum  `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
 
-#build/X86/gem5.opt  --debug-flags=Spec_Wakeup configs/ECE_752_project/two_level.py   bzip2  5
-#echo "bzip2_I2E_delay_5" >> log
-#grep -e system.cpu.ipc   m5out/stats.txt >> log
+#build/X86/gem5.opt  --debug-flags=IEW  configs/ECE_752_project/two_level.py   bzip2  1 
+#echo "bzip2  `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
+#
+#build/X86/gem5.opt  --debug-flags=IEW configs/ECE_752_project/two_level.py   bzip2  5
+#echo "bzip2   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
+
+
+build/X86/gem5.opt  --debug-flags=DBGCUR  configs/ECE_752_project/two_level.py  gobmk 3 
+echo "gamess   `grep -e system.cpu.ipc   m5out/stats.txt`"
+
+##build/X86/gem5.opt  --debug-flags=IEW configs/ECE_752_project/two_level.py   gamess  5
+##echo "gamess   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
+
+#build/X86/gem5.opt  --debug-flags=IEW  configs/ECE_752_project/two_level.py   gobmk  1 
+#echo "gobmk   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
+#
+#build/X86/gem5.opt  --debug-flags=IEW configs/ECE_752_project/two_level.py   gobmk  5
+#echo "gobmk   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
+#
+#build/X86/gem5.opt  --debug-flags=IEW  configs/ECE_752_project/two_level.py   GemsFDTD  1 
+#echo "GemsFDTD   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
+##
+#build/X86/gem5.opt  --debug-flags=IEW configs/ECE_752_project/two_level.py   GemsFDTD  5
+#echo "GemsFDTD  `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
+
+#build/X86/gem5.opt  --debug-flags=IEW  configs/ECE_752_project/two_level.py   soplex  1 
+#echo "soplex   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
+#
+#build/X86/gem5.opt  --debug-flags=IEW configs/ECE_752_project/two_level.py   soplex  5
+#echo "soplex  `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
+
+

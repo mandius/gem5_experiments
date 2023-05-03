@@ -126,6 +126,9 @@ class BaseO3CPU(BaseCPU):
     wbWidth = Param.Unsigned(8, "Writeback width")
     fuPool = Param.FUPool(DefaultFUPool(), "Functional Unit pool")
 
+
+    spec_sched = Param.Bool(True, "Whether to turn on dependency checking or not");
+
     iewToCommitDelay = Param.Cycles(
         1, "Issue/Execute/Writeback to commit " "delay"
     )

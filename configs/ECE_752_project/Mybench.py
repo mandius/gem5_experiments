@@ -59,3 +59,61 @@ libquantum = Process()
 libquantum.executable =  BINARY_PATH
 libquantum.cmd = [libquantum.executable] + [IN_ARG]
 libquantum.output = "libquantum.out"
+
+#gamess
+B_NAME = "gamess"
+BINARY_PATH= EXE_ROOT + "gamess_base.i386-m32-gcc42-nn"
+#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
+IN_PATH = DATA_ROOT + B_NAME +  "/cytosine.2.config"
+#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
+IN_ARG = ""
+
+gamess = Process()
+gamess.executable =  BINARY_PATH
+gamess.cmd = [gamess.executable] + [IN_PATH]
+gamess.output = "gamess.out"
+
+
+#gobmk
+B_NAME = "gobmk"
+BINARY_PATH= EXE_ROOT + "gobmk_base.i386-m32-gcc42-nn"
+#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
+IN_PATH = DATA_ROOT + B_NAME +  "/13x13.tst"
+#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
+IN_ARG = ""
+
+gobmk = Process()
+gobmk.executable =  BINARY_PATH
+gobmk.cmd = [gobmk.executable] + [IN_PATH]
+gobmk.output = "gobmk.out"
+
+
+#GemsFDTD
+B_NAME = "GemsFDTD"
+BINARY_PATH= EXE_ROOT + "GemsFDTD_base.i386-m32-gcc42-nn"
+#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
+IN_PATH = ""
+#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
+IN_ARG = "/"
+
+GemsFDTD = Process()
+GemsFDTD.executable =  BINARY_PATH
+GemsFDTD.cmd = [GemsFDTD.executable] + [IN_PATH]
+GemsFDTD.output = "GemsFDTD.out"
+
+
+#soplex
+B_NAME = "soplex"
+BINARY_PATH= EXE_ROOT + "soplex_base.i386-m32-gcc42-nn"
+#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
+IN_PATH = "pds-50.mps"
+#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
+IN_ARG = "-sl -e -m45000"
+
+soplex = Process()
+soplex.executable =  BINARY_PATH
+soplex.cmd = [soplex.executable] + [IN_ARG, IN_PATH]
+soplex.output = "soplex.out"
+
+
+

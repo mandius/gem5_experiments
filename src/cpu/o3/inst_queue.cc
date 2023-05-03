@@ -52,6 +52,11 @@
 #include "enums/OpClass.hh"
 #include "params/BaseO3CPU.hh"
 #include "sim/core.hh"
+#include "debug/Spec_Wakeup.hh"
+#include "debug/Spec_Wakeup2.hh"
+#include "debug/DBGLD.hh"
+#include "debug/DBGCUR.hh"
+
 
 // clang complains about std::set being overloaded with Packet::set if
 // we open up the entire namespace std
@@ -350,6 +355,16 @@ InstructionQueue::IQIOStats::IQIOStats(statistics::Group *parent)
              "Number of floating point alu accesses"),
     ADD_STAT(vecAluAccesses, statistics::units::Count::get(),
              "Number of vector alu accesses")
+   
+    //ADD_STAT(spec_woken_insts, statistics::units::Count::get(),
+    //    	"Number of speculatively woken insts"),
+  
+    //ADD_STAT(spec_squash_insts, statistics::units::Count::get(),
+    //    	"Number of Speculatively Woken up Squashed insts"),
+  
+    //ADD_STAT(successful_spec_insts, statistics::units::Count::get(),
+    //		"Number of Speculatively Woken up Completed insts")
+
 {
     using namespace statistics;
     intInstQueueReads
@@ -387,6 +402,16 @@ InstructionQueue::IQIOStats::IQIOStats(statistics::Group *parent)
 
     vecAluAccesses
         .flags(total);
+
+//    spec_woken_insts
+//	.flags(total);
+//
+//    spec_squash_insts
+//	.flags(total);	
+//
+//    successful_spec_insts 
+//	.flags(total);
+
 }
 
 void
@@ -784,6 +809,32 @@ InstructionQueue::scheduleReadyInsts()
 
         DynInstPtr issuing_inst = readyInsts[op_class].top();
 
+
+
+	if((issuing_inst->get_spec_sched_wakeup())) {
+	 	DPRINTF(DBGCUR, "[scheduleReadyInsts] Squashing Speculatively Woken up Instruction _SEQ_%lli_  spec_sched=%0d ready_regs=%0d/%0d  @%ld\n", issuing_inst->seqNum, issuing_inst->get_spec_sched_wakeup(), issuing_inst->getSrcRegReady(),issuing_inst->numSrcRegs(), curTick()/1000);
+	 	//MK:: Will you not need to clean this inst from a lot of data structures liked scoreboard?
+		issuing_inst->reset_spec_sched_wakeup_state();
+
+                readyInsts[op_class].pop();
+
+                if (!readyInsts[op_class].empty()) {
+                 	moveToYoungerInst(order_it);
+            	} else {
+                	readyIt[op_class] = listOrder.end();
+                	queueOnList[op_class] = false;
+            	}
+
+            	listOrder.erase(order_it++);
+		//iqIOStats.spec_squash_insts++;
+	 	continue;
+	}// else {
+	//	if(issuing_inst->spec_woken_up){
+	//		//iqIOStats.successful_spec_insts++;
+	//	}
+	//}
+	
+
         if (issuing_inst->isFloating()) {
             iqIOStats.fpInstQueueReads++;
         } else if (issuing_inst->isVector()) {
@@ -832,6 +883,13 @@ InstructionQueue::scheduleReadyInsts()
         // If we have an instruction that doesn't require a FU, or a
         // valid FU, then schedule for execution.
         if (idx != FUPool::NoFreeFU) {
+		//MK:: Look Here
+
+	    issuing_inst->exec_tick = curTick() /1000;
+		
+	    issuing_inst->opLatency = op_latency;
+	    DPRINTF(DBGCUR, "[scheduleReadyInsts] Starting successfull execute of seq _SEQ_%lli_\n @%ld", issuing_inst->seqNum, curTick()/1000);
+
             if (op_latency == Cycles(1)) {
                 i2e_info->size++;
                 instsToExecute.push_back(issuing_inst);
@@ -893,6 +951,12 @@ InstructionQueue::scheduleReadyInsts()
             } else {
                 memDepUnit[tid].issue(issuing_inst);
             }
+
+	    if(!issuing_inst->isMemRef()&&iewStage->spec_sched){
+		
+	        DPRINTF(DBGCUR, "[scheduleReadyInsts] Enqueuing instruction for speculative wakeup _SEQ_%lli_ @%ld for %ld\n", issuing_inst->seqNum, curTick()/1000,op_latency+2 - 3 );
+	    	iewStage->spec_sched_wakeup.push_back(std::make_pair(issuing_inst, op_latency+2 - 3));
+	    }
 
             listOrder.erase(order_it++);
             iqStats.statIssuedInstType[tid][op_class]++;
@@ -1042,9 +1106,30 @@ InstructionQueue::wakeDependents(const DynInstPtr &completed_inst)
             // so that it knows which of its source registers is
             // ready.  However that would mean that the dependency
             // graph entries would need to hold the src_reg_idx.
-            dep_inst->markSrcRegReady();
 
-            addIfReady(dep_inst);
+
+
+	    //MK: Check what to do in case of loads.
+	    
+	    if(completed_inst->isMemRef() || (!dep_inst->get_spec_sched_wakeup()) ){ 
+            	dep_inst->markSrcRegReady();
+	        addIfReady(dep_inst);
+
+
+		DPRINTF(DBGCUR, "[wakeDependents] For Insts _SEQ_%lli waking up not woken or squashed dependent  _SEQ_%lli_ completed_inst->isMemRef()=%d dep_inst->get_spec_sched_wakeup()=%d regs_ready=%0d/%0d @%ld \n", completed_inst->seqNum, dep_inst->seqNum, completed_inst->isMemRef(),dep_inst->get_spec_sched_wakeup(), dep_inst->getSrcRegReady(), dep_inst->numSrcRegs(), curTick()/1000  );
+
+
+		
+	    } else if(!completed_inst->isMemRef()){
+
+		DPRINTF(DBGCUR, "[wakeDependents] For Insts _SEQ_%lli waking up not yet squashed  _SEQ_%lli_ completed_inst->isMemRef()=%d dep_inst->get_spec_sched_wakeup()=%0d regs_ready=%0d/%0d @%ld \n", completed_inst->seqNum, dep_inst->seqNum, completed_inst->isMemRef(),dep_inst->get_spec_sched_wakeup(),dep_inst->getSrcRegReady(),dep_inst->numSrcRegs(), curTick()/1000  );
+
+
+		dep_inst->unset_spec_sched_wakeup();
+	    }
+		
+
+	    
 
             dep_inst = dependGraph.pop(dest_reg->flatIndex());
 
@@ -1062,6 +1147,138 @@ InstructionQueue::wakeDependents(const DynInstPtr &completed_inst)
     return dependents;
 }
 
+
+//MK Task to speculatively wake up dependents
+int
+InstructionQueue::SpecSchedwakeDependents(const DynInstPtr &inst)
+{
+        int dependents = 0;
+
+   
+	
+    	
+	assert(!inst->isSquashed());
+    	// Tell the memory dependence unit to wake any dependents on this
+    	// instruction if it is a memory instruction.  Also complete the memory
+    	// instruction at this point since we know it executed without issues.
+    	ThreadID tid = inst->threadNumber;
+    	//MK Add a code to check that the instruction did not have any memory dependents as the load should not have any memory dependencies.
+
+
+    	for (int dest_reg_idx = 0;
+    	     dest_reg_idx < inst->numDestRegs();
+    	     dest_reg_idx++)
+    	{
+        	PhysRegIdPtr dest_reg =
+        	    inst->renamedDestIdx(dest_reg_idx);
+
+        	// Special case of uniq or control registers.  They are not
+        	// handled by the IQ and thus have no dependency graph entry.
+        	 if (dest_reg->isFixedMapping()) {
+        	     DPRINTF(Spec_Wakeup , "[Spec_Wakeup] Reg %d [%s] is part of a fix mapping, skipping\n",
+        	             dest_reg->index(), dest_reg->className());
+        	     continue;
+        	 }
+
+
+		//MK Pinned registers are the writes when there are multiple writes by microops are expected so all the writes should be completed before waking up the dependents
+		//MK  https://www.mail-archive.com/gem5-dev@gem5.org/msg27832.html
+		//MK In this case we are just skipping, not modifying any state.
+        	//MKTEST // Avoid waking up dependents if the register is pinned
+        	//MKTEST dest_reg->decrNumPinnedWritesToComplete();
+        	//MKTEST if (dest_reg->isPinned())
+        	//MKTEST	     inst->setPinnedRegsWritten();
+
+
+		//assert(!dest_reg->isPinned());
+		//assert(!(dest_reg->getNumPinnedWritesToComplete()-1 > 0));
+
+        	 if (dest_reg->getNumPinnedWritesToComplete()-1 > 0) {
+        	     DPRINTF(DBGLD, "[SpecSchedwakeDependents] Reg %d [%s] is pinned, skipping value = %0d\n",
+        	             dest_reg->index(), dest_reg->className(),dest_reg->getNumPinnedWritesToComplete() );
+        	     continue;
+        	 }
+		///////////////////////////////////////////////////////////////////////	
+
+
+
+        	
+
+        	//Go through the dependency chain, marking the registers as
+        	//ready within the waiting instructions.
+        	DynInstPtr dep_inst; 
+		std::vector<DynInstPtr> popped_inst;
+		do  {
+			dep_inst = dependGraph.pop(dest_reg->flatIndex());
+			if(dep_inst) {
+				popped_inst.push_back(dep_inst);
+			}
+		}while(dep_inst);
+				
+		//char s[500];
+		//
+		//std::strcpy(s," ");
+
+		//
+
+		//for(auto it = popped_inst.begin(); it!= popped_inst.end(); it++){
+		//	std::sprintf(s, "%s  %lli  ",s, (*it)->seqNum);
+		//}	
+		//std::strcat(s,"\n");
+
+
+		std::stringstream ss;
+
+		for(auto it = popped_inst.begin(); it!= popped_inst.end(); it++){
+			ss << "_SEQ_"<<(*it)->seqNum << "_ ";
+		}	
+		ss<< "\n";
+
+		std::string s(ss.str());
+
+		if(!popped_inst.empty()){
+			DPRINTF(DBGCUR, "[SpecSchedwakeDependents] For Instruction _SEQ_%lli_, @%u waking up dependents %s \n", inst->seqNum, curTick()/1000, s );
+		}
+
+
+		for(auto it = popped_inst.begin(); it!= popped_inst.end(); it++){
+
+        	    
+		   
+        	    // Might want to give more information to the instruction
+        	    // so that it knows which of its source registers is
+        	    // ready.  However that would mean that the dependency
+        	    // graph entries would need to hold the src_reg_idx.
+        	    (*it)->markSrcRegReady();
+		    (*it)->set_spec_sched_wakeup(inst->seqNum);
+		   
+        	    addIfReady((*it));
+
+        	    ++dependents;
+		   
+        	}
+
+        	// Reset the head node now that all of its dependents have
+        	// been woken up.
+        	assert(dependGraph.empty(dest_reg->flatIndex()));
+        	//dependGraph.clearInst(dest_reg->flatIndex());
+
+		//Push Back All the instructions to the dependency graph
+		for(auto it = popped_inst.begin(); it!= popped_inst.end(); it++){
+			dependGraph.insert(dest_reg->flatIndex(), (*it));
+		}
+
+        	
+
+       
+    	}
+
+  
+  return dependents;
+}
+
+
+
 void
 InstructionQueue::addReadyMemInst(const DynInstPtr &ready_inst)
 {
@@ -1078,6 +1295,11 @@ InstructionQueue::addReadyMemInst(const DynInstPtr &ready_inst)
         listOrder.erase(readyIt[op_class]);
         addToOrderList(op_class);
     }
+
+    
+    ready_inst->issue_tick = curTick()/1000;
+    
+
 
     DPRINTF(IQ, "Instruction is ready to issue, putting it onto "
             "the ready list, PC %s opclass:%i [sn:%llu].\n",
@@ -1314,6 +1536,8 @@ InstructionQueue::doSquash(ThreadID tid)
             if (dest_reg->isFixedMapping()){
                 continue;
             }
+            DPRINTF(DBGCUR, "[DOSQUASH] seqNum=%lli ,isload=%0d, Destination Register Index=%0d]\n",squashed_inst->seqNum,squashed_inst->isLoad(), dest_reg->flatIndex());
+	
             assert(dependGraph.empty(dest_reg->flatIndex()));
             dependGraph.clearInst(dest_reg->flatIndex());
         }
@@ -1418,6 +1642,13 @@ InstructionQueue::addIfReady(const DynInstPtr &inst)
     // available, then add it to the list of ready instructions.
     if (inst->readyToIssue()) {
 
+        
+        //if(inst->get_spec_sched_wakeup()){
+		//iqIOStats.spec_woken_insts++;
+		//inst->spec_woken_up=1;
+	//}
+
+
         //Add the instruction to the proper ready list.
         if (inst->isMemRef()) {
 
@@ -1430,11 +1661,13 @@ InstructionQueue::addIfReady(const DynInstPtr &inst)
             return;
         }
 
+
+	inst->issue_tick = curTick()/1000;
+
         OpClass op_class = inst->opClass();
 
-        DPRINTF(IQ, "Instruction is ready to issue, putting it onto "
-                "the ready list, PC %s opclass:%i [sn:%llu].\n",
-                inst->pcState(), op_class, inst->seqNum);
+
+
 
         readyInsts[op_class].push(inst);
 
