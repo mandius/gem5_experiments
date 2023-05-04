@@ -78,7 +78,6 @@ InstructionQueue::FUCompletion::FUCompletion(const DynInstPtr &_inst,
 void
 InstructionQueue::FUCompletion::process()
 {
-    inst->exec_tick = curTick()/1000;
     iqPtr->processFUCompletion(inst, freeFU ? fuIdx : -1);
     inst = NULL;
 }
@@ -968,10 +967,14 @@ InstructionQueue::scheduleReadyInsts()
                 memDepUnit[tid].issue(issuing_inst);
             }
 
-	    if(!issuing_inst->isMemRef()&&iewStage->spec_sched&& !issuing_inst->getspecSquashed()){
+	    if(iewStage->spec_sched&& !issuing_inst->getspecSquashed()){
 		
 	        DPRINTF(DBGCUR, "[scheduleReadyInsts] Enqueuing instruction for speculative wakeup _SEQ_%lli_ @%ld for %ld\n", issuing_inst->seqNum, curTick()/1000,op_latency-1 );
-	    	iewStage->spec_sched_wakeup.push_back(std::make_pair(issuing_inst, op_latency-1));
+		if(issuing_inst->isLoad()) {
+			iewStage->spec_sched_wakeup.push_back(std::make_pair(issuing_inst, op_latency-1 + 5));
+		} else {
+	    		iewStage->spec_sched_wakeup.push_back(std::make_pair(issuing_inst, op_latency-1));
+		}
 	    }
 
             listOrder.erase(order_it++);
@@ -1127,7 +1130,7 @@ InstructionQueue::wakeDependents(const DynInstPtr &completed_inst)
 
 	    //MK: Check what to do in case of loads.
 	    
-	    if(completed_inst->isMemRef() || (!dep_inst->get_spec_sched_wakeup()) ){ 
+	    if(!dep_inst->get_spec_sched_wakeup() ){ 
             	dep_inst->markSrcRegReady();
 	        addIfReady(dep_inst);
 
@@ -1136,7 +1139,7 @@ InstructionQueue::wakeDependents(const DynInstPtr &completed_inst)
 
 
 		
-	    } else if(!completed_inst->isMemRef()){
+	    } else {
 
 		DPRINTF(DBGCUR, "[wakeDependents] For Insts _SEQ_%lli waking up not yet squashed  _SEQ_%lli_ completed_inst->isMemRef()=%d dep_inst->get_spec_sched_wakeup()=%0d regs_ready=%0d/%0d @%ld \n", completed_inst->seqNum, dep_inst->seqNum, completed_inst->isMemRef(),dep_inst->get_spec_sched_wakeup(),dep_inst->getSrcRegReady(),dep_inst->numSrcRegs(), curTick()/1000  );
 
@@ -1319,7 +1322,7 @@ InstructionQueue::addReadyMemInst(const DynInstPtr &ready_inst)
     }
 
     
-    ready_inst->issue_tick = curTick()/1000;
+    
     
 
 
@@ -1688,7 +1691,7 @@ InstructionQueue::addIfReady(const DynInstPtr &inst)
         }
 
 
-	inst->issue_tick = curTick()/1000;
+	
 
         OpClass op_class = inst->opClass();
 

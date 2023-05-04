@@ -145,9 +145,18 @@ void IEW::spec_sched_wakeup_task(){
 	
 	while(it != spec_sched_wakeup.end()) {
 
-		//Check that a replayed or already squashed instruction does not make to this list
-		assert(!it->first->getspecSquashed());
-		
+		//In case of loads, an already spec_squashed instruction can make it to the list, because load will be squashed in the execute phase and its queue will probably go beyond the execute phase.
+
+		if(it->first->isLoad()){
+			if(it->first->getspecSquashed()){
+				it = spec_sched_wakeup.erase(it);
+				continue;
+			}
+		} else {		
+			assert(!it->first->getspecSquashed());
+		}		
+
+
 		if((it->second ==0)){
 			if((!it->first->isSquashed())) instQueue.SpecSchedwakeDependents(it->first);
 			it = spec_sched_wakeup.erase(it);
@@ -156,6 +165,7 @@ void IEW::spec_sched_wakeup_task(){
 			it->second = it->second -1;
 			it++;		
 		}
+			
 	}
 	
 
@@ -1126,7 +1136,6 @@ IEW::dispatchInsts(ThreadID tid)
 
         insts_to_dispatch.pop();
 
-	//inst->issue_tick = curTick()/1000;
         toRename->iewInfo[tid].dispatched++;
 
         ++iewStats.dispatchedInsts;
@@ -1208,11 +1217,11 @@ IEW::executeInsts()
 
 
 	if((inst->get_spec_sched_wakeup())) {
-		if(!inst->isSquashed()){
-	 		DPRINTF(DBGCUR, "[executeInsts] Squashing Speculatively Woken up Instruction _SEQ_%lli_  spec_sched=%0d ready_regs=%0d/%0d is_squashed=%0d is_issued=%0d is_spec_issued=%0d @%ld\n", inst->seqNum, inst->get_spec_sched_wakeup(), inst->getSrcRegReady(),inst->numSrcRegs(), inst->isSquashed(), inst->isIssued(), inst->getspecIssued(), curTick()/1000);
-	 	        //MK:: Will you not need to clean this inst from a lot of data structures liked scoreboard?
-			instQueue.iqIOStats.spec_squash_insts++;
-		}
+		
+	 	DPRINTF(DBGCUR, "[executeInsts] Squashing Speculatively Woken up Instruction _SEQ_%lli_  spec_sched=%0d ready_regs=%0d/%0d is_squashed=%0d is_issued=%0d is_spec_issued=%0d @%ld\n", inst->seqNum, inst->get_spec_sched_wakeup(), inst->getSrcRegReady(),inst->numSrcRegs(), inst->isSquashed(), inst->isIssued(), inst->getspecIssued(), curTick()/1000);
+	 	//MK:: Will you not need to clean this inst from a lot of data structures liked scoreboard?
+		instQueue.iqIOStats.spec_squash_insts++;
+		
 		inst->reset_spec_sched_wakeup_state();	
 
 		continue;
@@ -1344,6 +1353,9 @@ IEW::executeInsts()
             instToCommit(inst);
         }
 
+    	inst->exec_tick = curTick()/1000;
+
+
         updateExeInstStats(inst);
 
         // Check if branch prediction was correct, if not then we need
@@ -1469,6 +1481,23 @@ IEW::writebackInsts()
         // Notify potential listeners that execution is complete for this
         // instruction.
         ppToCommit->notify(inst);
+
+
+	//Check that this instruction is still not in spec wake depedent queue, This is needed in case of loads
+        //That are squashed or completed prematurely
+	
+	std::list<std::pair<DynInstPtr,int>>::iterator it =  spec_sched_wakeup.begin();
+
+	while(it != spec_sched_wakeup.end()) {
+		if((it->first->seqNum == inst->seqNum)){
+		
+			it = spec_sched_wakeup.erase(it);
+			break;
+		}
+		it++;
+		
+	}
+
 
 
 
