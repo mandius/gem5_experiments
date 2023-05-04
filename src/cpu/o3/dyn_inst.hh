@@ -93,7 +93,9 @@ class DynInst : public ExecContext, public RefCounted
     uint64_t issue_to_execute_cycles;
     uint64_t execute_to_writeback_cycles;  
     uint64_t opLatency;
-
+    int      spec_woken_up;
+    int      spec_issued =0;
+    int      is_spec_squashed=0;
    
     InstSeqNum* dependent_load_seqNum = NULL;
 
@@ -360,7 +362,8 @@ class DynInst : public ExecContext, public RefCounted
     {
 	unmarkSrcRegReady(spec_sched_wakeup);
 	spec_sched_wakeup=0;
-	clearCanIssue();	
+	clearCanIssue();
+	setspecSquashed();	
     }
 
    
@@ -808,6 +811,18 @@ class DynInst : public ExecContext, public RefCounted
 
     /** Sets this instruction as issued from the IQ. */
     void setIssued() { status.set(Issued); }
+
+    void setspecIssued() { spec_issued=1;}
+
+    int getspecIssued() { return spec_issued; }
+
+    void clearspecIssued() { spec_issued=0;}
+
+    void setspecSquashed() { is_spec_squashed=1;}
+    void clearspecSquashed() { is_spec_squashed=0;}
+    int  getspecSquashed() { return is_spec_squashed;}
+
+
 
     /** Returns whether or not this instruction has issued. */
     bool isIssued() const { return status[Issued]; }

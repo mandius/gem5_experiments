@@ -71,8 +71,15 @@ SimpleOpts.add_option("benchmark", nargs="?", default="bzip2")
 #Add option for Issue to Execute Delay
 SimpleOpts.add_option("I2E_delay", nargs="?", default="1")
 
-#Adding an option for the max number of instructions to be executed per thread.
+
+#adding an option for the max number of instructions to be executed per thread.
+SimpleOpts.add_option("spec_sched", nargs="?", default="True")
+
+#adding an option for the max number of instructions to be executed per thread.
 SimpleOpts.add_option("maxinsts", nargs="?", default="1000000")
+
+
+
 
 
 # Finalize the arguments and grab the args so we can pass it on to our objects
@@ -93,7 +100,7 @@ system.mem_ranges = [AddrRange("1GB")]  # Create an address range
 # Create an O3 CPU
 system.cpu = O3CPU()
 system.cpu.issueToExecuteDelay = args.I2E_delay
-system.cpu.spec_sched = "False"
+system.cpu.spec_sched = args.spec_sched
 
 ### Fixed parameters according to the configuration
 system.cpu.LQEntries = 72

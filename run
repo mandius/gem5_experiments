@@ -2,8 +2,8 @@
 #
 #Run file for the benchmarks
 
-rm -rf log
-touch log
+rm -rf log_book
+touch log_book
 
 #build/X86/gem5.opt  --debug-flags=IEW  configs/ECE_752_project/two_level.py   libquantum  1 
 #echo "libquantum `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
@@ -17,9 +17,22 @@ touch log
 #build/X86/gem5.opt  --debug-flags=IEW configs/ECE_752_project/two_level.py   bzip2  5
 #echo "bzip2   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
 
+echo "=============================         With Spec Sched   ==============================" >> log_book
+build/X86/gem5.debug  --debug-flags=DBGCUR  configs/ECE_752_project/two_level.py  test 4 True
+echo "test   `grep -e system.cpu.ipc -e simTicks -e system.cpu.spec_woken_insts -e system.cpu.spec_squash_insts -e system.cpu.successful_spec_insts  m5out/stats.txt`"   >> log_book
 
-build/X86/gem5.opt  --debug-flags=DBGCUR  configs/ECE_752_project/two_level.py  gobmk 3 
-echo "gamess   `grep -e system.cpu.ipc   m5out/stats.txt`"
+rm -rf m5out/out_enabled
+cat m5out/test.out > m5out/out_enabled
+
+echo "===========================         Without Spec Sched   ==============================" >> log_book
+build/X86/gem5.debug  --debug-flags=DBGCUR  configs/ECE_752_project/two_level.py  test 4 False
+echo "test   `grep -e system.cpu.ipc -e simTicks -e system.cpu.spec_woken_insts -e system.cpu.spec_squash_insts -e system.cpu.successful_spec_insts  m5out/stats.txt`"   >> log_book
+
+rm -rf m5out/out_disabled
+cat m5out/test.out > m5out/out_disabled
+
+diff m5out/out_enabled m5out/out_disabled
+
 
 ##build/X86/gem5.opt  --debug-flags=IEW configs/ECE_752_project/two_level.py   gamess  5
 ##echo "gamess   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log

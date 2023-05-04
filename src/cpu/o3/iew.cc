@@ -142,12 +142,14 @@ void IEW::spec_sched_wakeup_task(){
 	
 	std::list<std::pair<DynInstPtr,int>>::iterator it =  spec_sched_wakeup.begin();
 	
-
+	
 	while(it != spec_sched_wakeup.end()) {
 
-	
-		if((it->second ==0)&&(!it->first->isSquashed())){
-		        instQueue.SpecSchedwakeDependents(it->first);
+		//Check that a replayed or already squashed instruction does not make to this list
+		assert(!it->first->getspecSquashed());
+		
+		if((it->second ==0)){
+			if((!it->first->isSquashed())) instQueue.SpecSchedwakeDependents(it->first);
 			it = spec_sched_wakeup.erase(it);
 		
 		}else {
@@ -155,6 +157,8 @@ void IEW::spec_sched_wakeup_task(){
 			it++;		
 		}
 	}
+	
+
 	 
 }
 
@@ -1122,7 +1126,7 @@ IEW::dispatchInsts(ThreadID tid)
 
         insts_to_dispatch.pop();
 
-	inst->issue_tick = curTick()/1000;
+	//inst->issue_tick = curTick()/1000;
         toRename->iewInfo[tid].dispatched++;
 
         ++iewStats.dispatchedInsts;
@@ -1201,9 +1205,34 @@ IEW::executeInsts()
 	DPRINTF(IEW, "Execute: Processing PC %s, [tid:%i] [sn:%llu].\n",
 		inst->pcState(), inst->threadNumber,inst->seqNum);
 	
+
+
+	if((inst->get_spec_sched_wakeup())) {
+		if(!inst->isSquashed()){
+	 		DPRINTF(DBGCUR, "[executeInsts] Squashing Speculatively Woken up Instruction _SEQ_%lli_  spec_sched=%0d ready_regs=%0d/%0d is_squashed=%0d is_issued=%0d is_spec_issued=%0d @%ld\n", inst->seqNum, inst->get_spec_sched_wakeup(), inst->getSrcRegReady(),inst->numSrcRegs(), inst->isSquashed(), inst->isIssued(), inst->getspecIssued(), curTick()/1000);
+	 	        //MK:: Will you not need to clean this inst from a lot of data structures liked scoreboard?
+			instQueue.iqIOStats.spec_squash_insts++;
+		}
+		inst->reset_spec_sched_wakeup_state();	
+
+		continue;
+	} else {
+		if(inst->getspecIssued()) {
+			instQueue.iqIOStats.successful_spec_insts++;
+			DPRINTF(DBGCUR, "[executeInsts] Starting successfull execute of Speculatively woken up instruction seq _SEQ_%lli_\n @%ld", inst->seqNum, curTick()/1000);
+		}
+	}
+
+
+
+
+
         // Notify potential listeners that this instruction has started
         // executing
         ppExecute->notify(inst);
+
+
+
 
         // Check if the instruction is squashed; if so then skip it
         if (inst->isSquashed()) {
@@ -1460,7 +1489,7 @@ IEW::writebackInsts()
 	    inst->issue_to_execute_cycles = inst->exec_tick - inst->issue_tick;
 	    inst->execute_to_writeback_cycles = inst->writeback_tick - inst->exec_tick;
 
-	    DPRINTF(DBGLD, "[LATENCYPRINT] Instruction=%lli isMemref =%0d :: isLoad =%0d :: op_latency=%0d :: opClass =%0d I_to_E_Latency=%ld, E_to_W_latency=%ld\n" , inst->seqNum, inst->isMemRef() , inst->isLoad(), inst->opLatency, inst->opClass(), inst->issue_to_execute_cycles, inst->execute_to_writeback_cycles );
+	    DPRINTF(DBGCUR, "[LATENCYPRINT] Instruction=%lli isMemref =%0d :: isLoad =%0d :: op_latency=%0d :: opClass =%0d I_to_E_Latency=%ld, E_to_W_latency=%ld\n" , inst->seqNum, inst->isMemRef() , inst->isLoad(), inst->opLatency, inst->opClass(), inst->issue_to_execute_cycles, inst->execute_to_writeback_cycles );
 
 
             int dependents = instQueue.wakeDependents(inst);

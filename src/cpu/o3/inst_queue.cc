@@ -78,6 +78,7 @@ InstructionQueue::FUCompletion::FUCompletion(const DynInstPtr &_inst,
 void
 InstructionQueue::FUCompletion::process()
 {
+    inst->exec_tick = curTick()/1000;
     iqPtr->processFUCompletion(inst, freeFU ? fuIdx : -1);
     inst = NULL;
 }
@@ -354,16 +355,16 @@ InstructionQueue::IQIOStats::IQIOStats(statistics::Group *parent)
     ADD_STAT(fpAluAccesses, statistics::units::Count::get(),
              "Number of floating point alu accesses"),
     ADD_STAT(vecAluAccesses, statistics::units::Count::get(),
-             "Number of vector alu accesses")
+             "Number of vector alu accesses"),
    
-    //ADD_STAT(spec_woken_insts, statistics::units::Count::get(),
-    //    	"Number of speculatively woken insts"),
+    ADD_STAT(spec_woken_insts, statistics::units::Count::get(),
+        	"Number of speculatively woken insts"),
   
-    //ADD_STAT(spec_squash_insts, statistics::units::Count::get(),
-    //    	"Number of Speculatively Woken up Squashed insts"),
+    ADD_STAT(spec_squash_insts, statistics::units::Count::get(),
+        	"Number of Speculatively Woken up Squashed insts"),
   
-    //ADD_STAT(successful_spec_insts, statistics::units::Count::get(),
-    //		"Number of Speculatively Woken up Completed insts")
+    ADD_STAT(successful_spec_insts, statistics::units::Count::get(),
+    		"Number of Speculatively Woken up Completed insts")
 
 {
     using namespace statistics;
@@ -403,14 +404,14 @@ InstructionQueue::IQIOStats::IQIOStats(statistics::Group *parent)
     vecAluAccesses
         .flags(total);
 
-//    spec_woken_insts
-//	.flags(total);
-//
-//    spec_squash_insts
-//	.flags(total);	
-//
-//    successful_spec_insts 
-//	.flags(total);
+    spec_woken_insts
+	.flags(total);
+
+    spec_squash_insts
+	.flags(total);	
+
+    successful_spec_insts 
+	.flags(total);
 
 }
 
@@ -811,26 +812,26 @@ InstructionQueue::scheduleReadyInsts()
 
 
 
-	if((issuing_inst->get_spec_sched_wakeup())) {
-	 	DPRINTF(DBGCUR, "[scheduleReadyInsts] Squashing Speculatively Woken up Instruction _SEQ_%lli_  spec_sched=%0d ready_regs=%0d/%0d  @%ld\n", issuing_inst->seqNum, issuing_inst->get_spec_sched_wakeup(), issuing_inst->getSrcRegReady(),issuing_inst->numSrcRegs(), curTick()/1000);
-	 	//MK:: Will you not need to clean this inst from a lot of data structures liked scoreboard?
-		issuing_inst->reset_spec_sched_wakeup_state();
+	//if((issuing_inst->get_spec_sched_wakeup())) {
+	// 	DPRINTF(DBGCUR, "[scheduleReadyInsts] Squashing Speculatively Woken up Instruction _SEQ_%lli_  spec_sched=%0d ready_regs=%0d/%0d  @%ld\n", issuing_inst->seqNum, issuing_inst->get_spec_sched_wakeup(), issuing_inst->getSrcRegReady(),issuing_inst->numSrcRegs(), curTick()/1000);
+	// 	//MK:: Will you not need to clean this inst from a lot of data structures liked scoreboard?
+	//	issuing_inst->reset_spec_sched_wakeup_state();
 
-                readyInsts[op_class].pop();
+        //        readyInsts[op_class].pop();
 
-                if (!readyInsts[op_class].empty()) {
-                 	moveToYoungerInst(order_it);
-            	} else {
-                	readyIt[op_class] = listOrder.end();
-                	queueOnList[op_class] = false;
-            	}
+        //        if (!readyInsts[op_class].empty()) {
+        //         	moveToYoungerInst(order_it);
+        //    	} else {
+        //        	readyIt[op_class] = listOrder.end();
+        //        	queueOnList[op_class] = false;
+        //    	}
 
-            	listOrder.erase(order_it++);
-		//iqIOStats.spec_squash_insts++;
-	 	continue;
-	}// else {
+        //    	listOrder.erase(order_it++);
+	//	iqIOStats.spec_squash_insts++;
+	// 	continue;
+	//} else {
 	//	if(issuing_inst->spec_woken_up){
-	//		//iqIOStats.successful_spec_insts++;
+	//		iqIOStats.successful_spec_insts++;
 	//	}
 	//}
 	
@@ -885,14 +886,24 @@ InstructionQueue::scheduleReadyInsts()
         if (idx != FUPool::NoFreeFU) {
 		//MK:: Look Here
 
-	    issuing_inst->exec_tick = curTick() /1000;
+	    issuing_inst->issue_tick = curTick() /1000;
 		
 	    issuing_inst->opLatency = op_latency;
-	    DPRINTF(DBGCUR, "[scheduleReadyInsts] Starting successfull execute of seq _SEQ_%lli_\n @%ld", issuing_inst->seqNum, curTick()/1000);
+
+
+
+            if(issuing_inst->get_spec_sched_wakeup()){
+		iqIOStats.spec_woken_insts++;
+		
+	    }
+
+
 
             if (op_latency == Cycles(1)) {
                 i2e_info->size++;
+
                 instsToExecute.push_back(issuing_inst);
+
 
                 // Add the FU onto the list of FU's to be freed next
                 // cycle if we used one.
@@ -932,7 +943,12 @@ InstructionQueue::scheduleReadyInsts()
                 queueOnList[op_class] = false;
             }
 
-            issuing_inst->setIssued();
+            if(!issuing_inst->get_spec_sched_wakeup()){
+            	issuing_inst->setIssued();
+	    } else {
+		issuing_inst->setspecIssued();
+	    }
+	    
             ++total_issued;
 
 #if TRACING_ON
@@ -952,10 +968,10 @@ InstructionQueue::scheduleReadyInsts()
                 memDepUnit[tid].issue(issuing_inst);
             }
 
-	    if(!issuing_inst->isMemRef()&&iewStage->spec_sched){
+	    if(!issuing_inst->isMemRef()&&iewStage->spec_sched&& !issuing_inst->getspecSquashed()){
 		
-	        DPRINTF(DBGCUR, "[scheduleReadyInsts] Enqueuing instruction for speculative wakeup _SEQ_%lli_ @%ld for %ld\n", issuing_inst->seqNum, curTick()/1000,op_latency+2 - 3 );
-	    	iewStage->spec_sched_wakeup.push_back(std::make_pair(issuing_inst, op_latency+2 - 3));
+	        DPRINTF(DBGCUR, "[scheduleReadyInsts] Enqueuing instruction for speculative wakeup _SEQ_%lli_ @%ld for %ld\n", issuing_inst->seqNum, curTick()/1000,op_latency-1 );
+	    	iewStage->spec_sched_wakeup.push_back(std::make_pair(issuing_inst, op_latency-1));
 	    }
 
             listOrder.erase(order_it++);
@@ -1126,6 +1142,12 @@ InstructionQueue::wakeDependents(const DynInstPtr &completed_inst)
 
 
 		dep_inst->unset_spec_sched_wakeup();
+
+		if(dep_inst->getspecIssued() &&(!dep_inst->get_spec_sched_wakeup())){
+			dep_inst->setIssued();
+		}
+
+
 	    }
 		
 
@@ -1434,7 +1456,7 @@ InstructionQueue::doSquash(ThreadID tid)
             continue;
         }
 
-        if (!squashed_inst->isIssued() ||
+        if (!squashed_inst->isIssued() || //What if instruction is already issued?
             (squashed_inst->isMemRef() &&
              !squashed_inst->memOpDone())) {
 
@@ -1536,11 +1558,15 @@ InstructionQueue::doSquash(ThreadID tid)
             if (dest_reg->isFixedMapping()){
                 continue;
             }
-            DPRINTF(DBGCUR, "[DOSQUASH] seqNum=%lli ,isload=%0d, Destination Register Index=%0d]\n",squashed_inst->seqNum,squashed_inst->isLoad(), dest_reg->flatIndex());
+
 	
             assert(dependGraph.empty(dest_reg->flatIndex()));
             dependGraph.clearInst(dest_reg->flatIndex());
         }
+
+        DPRINTF(DBGCUR, "[DOSQUASH] seqNum=%lli ,isload=%0d\n",squashed_inst->seqNum,squashed_inst->isLoad());
+
+
         instList[tid].erase(squash_it--);
         ++iqStats.squashedInstsExamined;
     }
@@ -1642,11 +1668,11 @@ InstructionQueue::addIfReady(const DynInstPtr &inst)
     // available, then add it to the list of ready instructions.
     if (inst->readyToIssue()) {
 
-        
-        //if(inst->get_spec_sched_wakeup()){
-		//iqIOStats.spec_woken_insts++;
-		//inst->spec_woken_up=1;
-	//}
+       
+	//Although no need as we do not use getspecIssued anywhere, but still handy
+	if(inst->getspecSquashed()) {
+		inst->clearspecIssued();
+	}
 
 
         //Add the instruction to the proper ready list.

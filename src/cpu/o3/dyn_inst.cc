@@ -62,7 +62,8 @@ DynInst::DynInst(const Arrays &arrays, const StaticInstPtr &static_inst,
       _readySrcIdx(arrays.readySrcIdx), macroop(_macroop)
 {
     spec_sched_wakeup=0;
-    
+    spec_woken_up=0;    
+
     //MK An Array to track loads on which this instruction was found to be dependent, This is only some debug information 
     dependent_load_seqNum = (InstSeqNum*)malloc(sizeof(InstSeqNum)*numSrcs());
 

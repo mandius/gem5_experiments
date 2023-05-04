@@ -1,10 +1,42 @@
+#include <stdio.h>
 
-#include<stdio.h>
-int main() {
-	
-	volatile int a = 5;
-	a= a+1;
+int main()
+{
+    int number,i,j;
+    
 
-	printf("The Value of a is = %0d\n", a);
-	return 0;
+    number = 2000;
+
+    int primes[number+1];
+
+
+    //populating array with naturals numbers
+    for(i = 2; i<=number; i++)
+        primes[i] = i;
+
+    i = 2;
+    while ((i*i) <= number)
+    {
+        if (primes[i] != 0)
+        {
+            for(j=2; j<number; j++)
+            {
+                if (primes[i]*j > number)
+                    break;
+                else
+                    // Instead of deleteing , making elemnets 0
+                    primes[primes[i]*j]=0;
+            }
+        }
+        i++;
+    }
+
+    for(i = 2; i<=number; i++)
+    {
+        //If number is not 0 then it is prime
+        if (primes[i]!=0)
+            printf("%d\n",primes[i]);
+    }
+
+    return 0;
 }

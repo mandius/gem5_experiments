@@ -565,9 +565,9 @@ class InstructionQueue
         statistics::Scalar fpAluAccesses;
         statistics::Scalar vecAluAccesses;
 	
-	//statistics::Scalar spec_woken_insts;
-	//statistics::Scalar spec_squash_insts;
-	//statistics::Scalar successful_spec_insts;
+	statistics::Scalar spec_woken_insts;
+	statistics::Scalar spec_squash_insts;
+	statistics::Scalar successful_spec_insts;
 
 
     } iqIOStats;
