@@ -18,14 +18,18 @@ touch log_book
 #echo "bzip2   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
 
 echo "=============================         With Spec Sched without filtering  ==============================" >> log_book
-build/X86/gem5.fast     configs/ECE_752_project/two_level.py milc 5 True False 12000000  
+build/X86/gem5.fast     configs/ECE_752_project/two_level.py $1 4 True False 120000000  
+./extract_logs >> log_book
 
-echo "`grep  simTicks  m5out/stats.txt`"   >> log_book
-echo "`grep  system.cpu.ipc m5out/stats.txt`" >> log_book
-echo "`grep  load_spec_queued  m5out/stats.txt`"   >> log_book
-echo "`grep  load_spec_successful  m5out/stats.txt`"   >> log_book	
-echo "`grep  load_misspec_other	  m5out/stats.txt`"   >> log_book
-echo "`grep  load_misspec_L1miss   m5out/stats.txt`"   >> log_book
+
+#echo "`grep  simTicks  m5out/stats.txt`"   >> log_book
+#echo "`grep  system.cpu.ipc m5out/stats.txt`" >> log_book
+#echo "`grep  load_spec_queued  m5out/stats.txt`"   >> log_book
+#echo "`grep  load_spec_successful  m5out/stats.txt`"   >> log_book	
+#echo "`grep  load_misspec_other	  m5out/stats.txt`"   >> log_book
+#echo "`grep  load_misspec_L1miss   m5out/stats.txt`"   >> log_book
+#echo "`grep  load_latencies        m5out/stats.txt`"  >> log_book
+#echo "`grep  replayed_instructions m5out/stats.txt`"  >> log_book
 
 
 
@@ -34,14 +38,18 @@ rm -rf m5out/out_enabled
 cat m5out/test.out > m5out/out_enabled
 
 echo "=============================         With Spec Sched with filtering  ==============================" >> log_book
-build/X86/gem5.fast   configs/ECE_752_project/two_level.py milc 4 True True  12000000 
+build/X86/gem5.fast   configs/ECE_752_project/two_level.py $1 4 True True  120000000 
 
-echo "`grep  simTicks  m5out/stats.txt`"   >> log_book
-echo "`grep  system.cpu.ipc m5out/stats.txt`" >> log_book
-echo "`grep  load_spec_queued  m5out/stats.txt`"   >> log_book
-echo "`grep  load_spec_successful  m5out/stats.txt`"   >> log_book	
-echo "`grep  load_misspec_other	  m5out/stats.txt`"   >> log_book
-echo "`grep  load_misspec_L1miss   m5out/stats.txt`"   >> log_book
+./extract_logs >> log_book
+
+#echo "`grep  simTicks  m5out/stats.txt`"   >> log_book
+#echo "`grep  system.cpu.ipc m5out/stats.txt`" >> log_book
+#echo "`grep  load_spec_queued  m5out/stats.txt`"   >> log_book
+#echo "`grep  load_spec_successful  m5out/stats.txt`"   >> log_book	
+#echo "`grep  load_misspec_other	  m5out/stats.txt`"   >> log_book
+#echo "`grep  load_misspec_L1miss   m5out/stats.txt`"   >> log_book
+#echo "`grep  load_latencies        m5out/stats.txt`"  >> log_book
+#echo "`grep  replayed_instructions m5out/stats.txt`"  >> log_book
 
 
 

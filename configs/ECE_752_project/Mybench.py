@@ -36,9 +36,7 @@ test.output = 'test.out'
 #401.bzip2
 B_NAME = "bzip2"
 BINARY_PATH= EXE_ROOT + "bzip2_base.i386-m32-gcc42-nn"
-#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
 IN_PATH = DATA_ROOT + B_NAME +  "/input.source"
-#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
 IN_ARG = "280"
 
 bzip2 = Process()
@@ -50,9 +48,7 @@ bzip2.output = "bzip2.out"
 #libquantum
 B_NAME = "libquantum"
 BINARY_PATH= EXE_ROOT + "libquantum_base.i386-m32-gcc42-nn"
-#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
 IN_PATH = ""
-#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
 IN_ARG = "1397 8"
 
 libquantum = Process()
@@ -63,9 +59,7 @@ libquantum.output = "libquantum.out"
 #gamess
 B_NAME = "gamess"
 BINARY_PATH= EXE_ROOT + "gamess_base.i386-m32-gcc42-nn"
-#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
 IN_PATH = DATA_ROOT + B_NAME +  "/cytosine.2.config"
-#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
 IN_ARG = ""
 
 gamess = Process()
@@ -77,9 +71,7 @@ gamess.output = "gamess.out"
 #gobmk
 B_NAME = "gobmk"
 BINARY_PATH= EXE_ROOT + "gobmk_base.i386-m32-gcc42-nn"
-#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
 IN_PATH = DATA_ROOT + B_NAME +  "/13x13.tst"
-#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
 IN_ARG = ""
 
 gobmk = Process()
@@ -91,9 +83,7 @@ gobmk.output = "gobmk.out"
 #GemsFDTD
 B_NAME = "GemsFDTD"
 BINARY_PATH= EXE_ROOT + "GemsFDTD_base.i386-m32-gcc42-nn"
-#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
 IN_PATH = ""
-#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
 IN_ARG = "/"
 
 GemsFDTD = Process()
@@ -105,9 +95,7 @@ GemsFDTD.output = "GemsFDTD.out"
 #soplex
 B_NAME = "soplex"
 BINARY_PATH= EXE_ROOT + "soplex_base.i386-m32-gcc42-nn"
-#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
-IN_PATH = "pds-50.mps"
-#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
+IN_PATH = DATA_ROOT+B_NAME+"/pds-50.mps"
 IN_ARG = "-sl -e -m45000"
 
 soplex = Process()
@@ -119,9 +107,7 @@ soplex.output = "soplex.out"
 #gromacs
 B_NAME = "gromacs"
 BINARY_PATH= EXE_ROOT + "gromacs_base.i386-m32-gcc42-nn"
-#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
 IN_PATH = " "
-#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
 IN_ARG = "-silent -deffnm gromacs -nice 0"
 
 gromacs = Process()
@@ -132,9 +118,7 @@ gromacs.output = "gromacs.out"
 #milc
 B_NAME = "milc"
 BINARY_PATH= EXE_ROOT + "milc_base.i386-m32-gcc42-nn"
-#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
 IN_PATH = DATA_ROOT + B_NAME + "/su3imp.in"
-#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
 IN_ARG = " "
 
 milc = Process()
@@ -142,4 +126,135 @@ milc.executable =  BINARY_PATH
 milc.cmd = [milc.executable] + [IN_ARG, IN_PATH]
 milc.output = "milc.out"
 
+
+#mcf
+B_NAME = "mcf"
+BINARY_PATH= EXE_ROOT + "mcf_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/inp.in"
+IN_ARG = ""
+
+mcf = Process()
+mcf.executable =  BINARY_PATH
+mcf.cmd = [mcf.executable] + [IN_ARG, IN_PATH]
+mcf.output = "mcf.out"
+
+#leslie3d
+B_NAME = "leslie3d"
+BINARY_PATH= EXE_ROOT + "leslie3d_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/leslie3d.in"
+IN_ARG = ""
+
+leslie3d = Process()
+leslie3d.executable =  BINARY_PATH
+leslie3d.cmd = [leslie3d.executable] + [IN_ARG, IN_PATH]
+leslie3d.output = "leslie3d.out"
+
+
+#namd
+B_NAME = "namd"
+BINARY_PATH= EXE_ROOT + "namd_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/namd.input"
+IN_ARG = ""
+
+namd = Process()
+namd.executable =  BINARY_PATH
+namd.cmd = [namd.executable] + [IN_ARG, IN_PATH]
+namd.output = "namd.out"
+
+
+#povray
+B_NAME = "povray"
+BINARY_PATH= EXE_ROOT + "povray_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/SPEC-benchmark-ref.ini"
+IN_ARG = ""
+
+povray = Process()
+povray.executable =  BINARY_PATH
+povray.cmd = [povray.executable] + [IN_ARG, IN_PATH]
+povray.output = "povray.out"
+
+
+
+#hmmer
+B_NAME = "povray"
+BINARY_PATH= EXE_ROOT + "hmmer_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/nph3.hmm"
+IN_ARG = ""
+
+hmmer = Process()
+hmmer.executable =  BINARY_PATH
+hmmer.cmd = [hmmer.executable] + [IN_ARG, IN_PATH]
+hmmer.output = "hmmer.out"
+
+
+#sjeng
+B_NAME = "sjeng"
+BINARY_PATH= EXE_ROOT + "sjeng_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/ref.txt"
+IN_ARG = ""
+
+sjeng = Process()
+sjeng.executable =  BINARY_PATH
+sjeng.cmd = [sjeng.executable] + [IN_ARG, IN_PATH]
+sjeng.output = "sjeng.out"
+
+
+#h264ref
+B_NAME = "h264ref"
+BINARY_PATH= EXE_ROOT + "h264ref_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/foreman_ref_encoder_baseline.cfg"
+IN_ARG = ""
+
+h264ref = Process()
+h264ref.executable =  BINARY_PATH
+h264ref.cmd = [h264ref.executable] + [IN_ARG, IN_PATH]
+h264ref.output = "h264ref.out"
+
+
+
+#lbm
+B_NAME = "lbm"
+BINARY_PATH= EXE_ROOT + "lbm_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/refrence.dat"
+IN_ARG = ""
+
+lbm = Process()
+lbm.executable =  BINARY_PATH
+lbm.cmd = [lbm.executable] + [IN_ARG, IN_PATH]
+lbm.output = "lbm.out"
+
+
+#omnetpp
+B_NAME = "omnetpp"
+BINARY_PATH= EXE_ROOT + "omnetpp_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/omnetpp.ini"
+IN_ARG = ""
+
+omnetpp = Process()
+omnetpp.executable =  BINARY_PATH
+omnetpp.cmd = [omnetpp.executable] + [IN_ARG, IN_PATH]
+omnetpp.output = "omnetpp.out"
+
+
+#astar
+B_NAME = "astar"
+BINARY_PATH= EXE_ROOT + "astar_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/rivers.cfg"
+IN_ARG = ""
+
+astar = Process()
+astar.executable =  BINARY_PATH
+astar.cmd = [astar.executable] + [IN_ARG, IN_PATH]
+astar.output = "astar.out"
+
+#sphinx
+B_NAME = "sphinx"
+BINARY_PATH= EXE_ROOT + "sphinx_base.i386-m32-gcc42-nn"
+IN_PATH = DATA_ROOT+B_NAME+ "/an4.ctl"+ " . " + DATA_ROOT+B_NAME+ "/args.an4.test"
+IN_ARG = ""
+
+sphinx = Process()
+sphinx.executable =  BINARY_PATH
+sphinx.cmd = [sphinx.executable] + [IN_ARG, IN_PATH]
+sphinx.output = "sphinx.out"
 

@@ -177,7 +177,31 @@ elif args.benchmark == 'gromacs':
 	process = Mybench.gromacs
 elif args.benchmark == 'milc':
 	process = Mybench.milc
-
+elif args.benchmark == 'mcf':
+	process = Mybench.mcf
+elif args.benchmark == 'leslie3d':
+	process = Mybench.leslie3d
+elif args.benchmark == 'namd':
+	process = Mybench.namd
+elif args.benchmark == 'povray':
+	process = Mybench.povray
+elif args.benchmark == 'hmmer':
+	process = Mybench.hmmer
+elif args.benchmark == 'sjeng':
+	process = Mybench.sjeng
+elif args.benchmark == 'h264ref':
+	process = Mybench.h264ref
+elif args.benchmark == 'lbm':
+	process = Mybench.lbm
+elif args.benchmark == 'omnetpp':
+	process = Mybench.omnetpp
+elif args.benchmark == 'astar':
+	process = Mybench.astar
+elif args.benchmark == 'sphinx':
+	process = Mybench.sphinx
+else:
+	print("Benchmark not found")
+	exit(0)
 
 
 system.workload = SEWorkload.init_compatible(process.executable)

@@ -1524,6 +1524,31 @@ IEW::writebackInsts()
 	    DPRINTF(DBGCUR, "[LATENCYPRINT] Instruction=%lli isMemref =%0d :: isLoad =%0d :: op_latency=%0d :: opClass =%0d I_to_E_Latency=%ld, E_to_W_latency=%ld\n" , inst->seqNum, inst->isMemRef() , inst->isLoad(), inst->opLatency, inst->opClass(), inst->issue_to_execute_cycles, inst->execute_to_writeback_cycles );
 
 	   if(inst->isLoad()){
+
+
+
+		//Update the statistics for the L1 Hit Predictor
+		if(inst->execute_to_writeback_cycles<=5){
+			if(inst->load_spec_queued) {
+				
+				instQueue.iqIOStats.L1Hitpredictor_correct++;
+			} else{
+				
+				instQueue.iqIOStats.L1Hitpredictor_incorrect_miss_hit++;
+			}
+		} else {
+			if(!inst->load_spec_queued) {
+				
+				instQueue.iqIOStats.L1Hitpredictor_correct++;
+			} else{
+				
+				instQueue.iqIOStats.L1Hitpredictor_incorrect_hit_miss++;
+			}
+		}
+		
+
+
+
 	   	if(inst->execute_to_writeback_cycles<10){
 			if(inst->load_spec_queued) {
 				if(inst->execute_to_writeback_cycles<=5){
@@ -1543,6 +1568,14 @@ IEW::writebackInsts()
 
 	   	}
 		inst->load_spec_queued=0;
+
+		if(inst->execute_to_writeback_cycles>19){
+			instQueue.iqIOStats.load_latencies[19]++;
+		} else {
+			instQueue.iqIOStats.load_latencies[inst->execute_to_writeback_cycles]++;
+		}
+			
+
 	   }
 
             int dependents = instQueue.wakeDependents(inst);

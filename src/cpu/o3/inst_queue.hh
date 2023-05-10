@@ -578,6 +578,14 @@ class InstructionQueue
 	statistics::Scalar load_misspec_other;
 	statistics::Scalar load_misspec_L1miss;
 
+	statistics::Vector load_latencies;
+
+	statistics::Scalar replayed_instructions;
+
+	statistics::Scalar L1Hitpredictor_correct;
+	statistics::Scalar L1Hitpredictor_incorrect_hit_miss;
+	statistics::Scalar L1Hitpredictor_incorrect_miss_hit;
+
 
     } iqIOStats;
 };

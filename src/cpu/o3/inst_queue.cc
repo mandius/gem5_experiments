@@ -376,8 +376,22 @@ InstructionQueue::IQIOStats::IQIOStats(statistics::Group *parent)
 		"Number of loads for which speculative dependent wakeup was unsuccessful due to other reasons"),
 
      ADD_STAT(load_misspec_L1miss, statistics::units::Count::get(),
-		"Number of loads for which speculative dependent wakeup was unsuccessful due to L1miss")
+		"Number of loads for which speculative dependent wakeup was unsuccessful due to L1miss"),
 
+     ADD_STAT(load_latencies, statistics::units::Count::get(),
+		"Latencies of different loads"),
+
+     ADD_STAT(replayed_instructions, statistics::units::Count::get(),
+		"Number of replayed instructions"),
+
+     ADD_STAT(L1Hitpredictor_correct, statistics::units::Count::get(),
+		""),
+
+     ADD_STAT(L1Hitpredictor_incorrect_hit_miss, statistics::units::Count::get(),
+		""),
+
+     ADD_STAT(L1Hitpredictor_incorrect_miss_hit, statistics::units::Count::get(),
+		"")
 
 
 {
@@ -439,6 +453,32 @@ InstructionQueue::IQIOStats::IQIOStats(statistics::Group *parent)
      load_misspec_L1miss   
 	.flags(total);
 
+     replayed_instructions  
+	.flags(total);
+
+
+     L1Hitpredictor_correct
+	.flags(total);
+	
+
+     L1Hitpredictor_incorrect_hit_miss
+	.flags(total);
+
+     L1Hitpredictor_incorrect_miss_hit
+	.flags(total);
+
+
+     replayed_instructions  
+	.flags(total);
+
+
+
+
+
+    load_latencies
+        .init(20)
+        .flags(statistics::total)
+        ;
 
 }
 
@@ -916,6 +956,11 @@ InstructionQueue::scheduleReadyInsts()
 	    issuing_inst->issue_tick = curTick() /1000;
 		
 	    issuing_inst->opLatency = op_latency;
+
+
+	    if(issuing_inst->issue_retry>0){
+		iqIOStats.replayed_instructions++;
+	    }
 
 
             if(issuing_inst->get_spec_sched_wakeup()){
