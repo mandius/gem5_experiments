@@ -60,6 +60,7 @@
 #include "cpu/timebuf.hh"
 #include "enums/SMTQueuePolicy.hh"
 #include "sim/eventq.hh"
+#include "cpu/o3/L1HitPredictor.hh"
 
 namespace gem5
 {
@@ -129,9 +130,12 @@ class InstructionQueue
         void setFreeFU() { freeFU = true; }
     };
 
+    L1HitPredictor  *L1pred_ptr;
+	
+
     /** Constructs an IQ. */
     InstructionQueue(CPU *cpu_ptr, IEW *iew_ptr,
-            const BaseO3CPUParams &params);
+            const BaseO3CPUParams &params, L1HitPredictor *L1pred);
 
     /** Destructs the IQ. */
     ~InstructionQueue();
@@ -568,6 +572,11 @@ class InstructionQueue
 	statistics::Scalar spec_woken_insts;
 	statistics::Scalar spec_squash_insts;
 	statistics::Scalar successful_spec_insts;
+	
+	statistics::Scalar load_spec_queued;
+	statistics::Scalar load_spec_successful;
+	statistics::Scalar load_misspec_other;
+	statistics::Scalar load_misspec_L1miss;
 
 
     } iqIOStats;

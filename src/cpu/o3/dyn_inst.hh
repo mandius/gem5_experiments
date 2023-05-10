@@ -96,6 +96,8 @@ class DynInst : public ExecContext, public RefCounted
     int      spec_woken_up;
     int      spec_issued =0;
     int      is_spec_squashed=0;
+    int      issue_retry=0;
+    int      load_spec_queued=0;  //Added for book-keeping that which loads miss in L1 cache after being enqueued
    
     InstSeqNum* dependent_load_seqNum = NULL;
 
@@ -364,6 +366,7 @@ class DynInst : public ExecContext, public RefCounted
 	spec_sched_wakeup=0;
 	clearCanIssue();
 	setspecSquashed();	
+	clearspecIssued();
     }
 
    

@@ -90,8 +90,9 @@ InstructionQueue::FUCompletion::description() const
 }
 
 InstructionQueue::InstructionQueue(CPU *cpu_ptr, IEW *iew_ptr,
-        const BaseO3CPUParams &params)
+        const BaseO3CPUParams &params, L1HitPredictor *L1pred)
     : cpu(cpu_ptr),
+      L1pred_ptr(L1pred),
       iewStage(iew_ptr),
       fuPool(params.fuPool),
       iqPolicy(params.smtIQPolicy),
@@ -363,7 +364,21 @@ InstructionQueue::IQIOStats::IQIOStats(statistics::Group *parent)
         	"Number of Speculatively Woken up Squashed insts"),
   
     ADD_STAT(successful_spec_insts, statistics::units::Count::get(),
-    		"Number of Speculatively Woken up Completed insts")
+    		"Number of Speculatively Woken up Completed insts"),
+
+    ADD_STAT(load_spec_queued, statistics::units::Count::get(),
+		"Number of loads queued for speculative dependent execution"),
+	
+     ADD_STAT(load_spec_successful, statistics::units::Count::get(),
+		"Number of loads for which speculative dependent wakeup was successful"),
+
+     ADD_STAT(load_misspec_other, statistics::units::Count::get(),
+		"Number of loads for which speculative dependent wakeup was unsuccessful due to other reasons"),
+
+     ADD_STAT(load_misspec_L1miss, statistics::units::Count::get(),
+		"Number of loads for which speculative dependent wakeup was unsuccessful due to L1miss")
+
+
 
 {
     using namespace statistics;
@@ -411,6 +426,19 @@ InstructionQueue::IQIOStats::IQIOStats(statistics::Group *parent)
 
     successful_spec_insts 
 	.flags(total);
+
+     load_spec_queued 
+	.flags(total);
+
+     load_spec_successful 
+	.flags(total);
+
+     load_misspec_other   
+	.flags(total);
+
+     load_misspec_L1miss   
+	.flags(total);
+
 
 }
 
@@ -890,7 +918,6 @@ InstructionQueue::scheduleReadyInsts()
 	    issuing_inst->opLatency = op_latency;
 
 
-
             if(issuing_inst->get_spec_sched_wakeup()){
 		iqIOStats.spec_woken_insts++;
 		
@@ -944,9 +971,7 @@ InstructionQueue::scheduleReadyInsts()
 
             if(!issuing_inst->get_spec_sched_wakeup()){
             	issuing_inst->setIssued();
-	    } else {
-		issuing_inst->setspecIssued();
-	    }
+	    } 
 	    
             ++total_issued;
 
@@ -967,15 +992,45 @@ InstructionQueue::scheduleReadyInsts()
                 memDepUnit[tid].issue(issuing_inst);
             }
 
-	    if(iewStage->spec_sched&& !issuing_inst->getspecSquashed()){
+	    if(iewStage->spec_sched){
+	
+		//Check that this instruction is not already in the sched wakeup queue
+		std::list<std::pair<DynInstPtr,int>>::iterator it =  iewStage->spec_sched_wakeup.begin();
+
+		while(it != iewStage->spec_sched_wakeup.end()) {
+			if((it->first->seqNum == issuing_inst->seqNum)){
+				DPRINTF(DBGCUR, "Instruction %lli already on list   Aborting \n", issuing_inst->seqNum);
+				assert(0);
+			} 		
+			it++;
+		
+		}	
+
 		
 	        DPRINTF(DBGCUR, "[scheduleReadyInsts] Enqueuing instruction for speculative wakeup _SEQ_%lli_ @%ld for %ld\n", issuing_inst->seqNum, curTick()/1000,op_latency-1 );
 		if(issuing_inst->isLoad()) {
-			iewStage->spec_sched_wakeup.push_back(std::make_pair(issuing_inst, op_latency-1 + 5));
+
+			if(L1pred_ptr->ret_prediction(issuing_inst->pcState().instAddr())){
+				
+				issuing_inst->load_spec_queued=1;
+				iqIOStats.load_spec_queued++;
+
+				iewStage->spec_sched_wakeup.push_back(std::make_pair(issuing_inst, op_latency-1 + 5));
+			}
 		} else {
 	    		iewStage->spec_sched_wakeup.push_back(std::make_pair(issuing_inst, op_latency-1));
 		}
+
 	    }
+
+		
+	    if(issuing_inst->getspecSquashed()) {
+		issuing_inst->clearspecSquashed();
+		issuing_inst->issue_retry++;
+	    }
+
+
+
 
             listOrder.erase(order_it++);
             iqStats.statIssuedInstType[tid][op_class]++;
@@ -1148,6 +1203,7 @@ InstructionQueue::wakeDependents(const DynInstPtr &completed_inst)
 
 		if(dep_inst->getspecIssued() &&(!dep_inst->get_spec_sched_wakeup())){
 			dep_inst->setIssued();
+			dep_inst->clearspecIssued();
 		}
 
 
@@ -1237,6 +1293,7 @@ InstructionQueue::SpecSchedwakeDependents(const DynInstPtr &inst)
 			dep_inst = dependGraph.pop(dest_reg->flatIndex());
 			if(dep_inst) {
 				popped_inst.push_back(dep_inst);
+				
 			}
 		}while(dep_inst);
 				
@@ -1255,31 +1312,36 @@ InstructionQueue::SpecSchedwakeDependents(const DynInstPtr &inst)
 		std::stringstream ss;
 
 		for(auto it = popped_inst.begin(); it!= popped_inst.end(); it++){
-			ss << "_SEQ_"<<(*it)->seqNum << "_ ";
+			if(!(*it)->getspecIssued()){
+				ss << "_SEQ_"<<(*it)->seqNum << "_ ";
+			}
 		}	
 		ss<< "\n";
 
 		std::string s(ss.str());
 
 		if(!popped_inst.empty()){
-			DPRINTF(DBGCUR, "[SpecSchedwakeDependents] For Instruction _SEQ_%lli_, @%u waking up dependents %s \n", inst->seqNum, curTick()/1000, s );
+			DPRINTF(DBGCUR, "[SpecSchedwakeDependents] For Instruction _SEQ_%lli_ :: Issue Retry = %0d, @%u waking up dependents %s \n", inst->seqNum, inst->issue_retry, curTick()/1000, s );
 		}
 
 
 		for(auto it = popped_inst.begin(); it!= popped_inst.end(); it++){
 
         	    
+		    if(!(*it)->getspecIssued()){ //MK:: Dont wakeup the instruction again, if the instruction is already in flight on 
+        	    	// Might want to give more information to the instruction
+        	    	// so that it knows which of its source registers is
+        	    	// ready.  However that would mean that the dependency
+        	    	// graph entries would need to hold the src_reg_idx.
+        	    	(*it)->markSrcRegReady();
+		    	(*it)->set_spec_sched_wakeup(inst->seqNum);
 		   
-        	    // Might want to give more information to the instruction
-        	    // so that it knows which of its source registers is
-        	    // ready.  However that would mean that the dependency
-        	    // graph entries would need to hold the src_reg_idx.
-        	    (*it)->markSrcRegReady();
-		    (*it)->set_spec_sched_wakeup(inst->seqNum);
-		   
-        	    addIfReady((*it));
+        	    	addIfReady((*it));
 
-        	    ++dependents;
+        	    	++dependents;
+		    } else {
+			DPRINTF(DBGCUR, "[SpecSchedwakeDependents] For Source  _SEQ_%lli_ :: Issue Retry = %0d, @%u skipping in flight depedent=%lli \n", inst->seqNum, inst->issue_retry, curTick()/1000, (*it)->seqNum  );
+		    }
 		   
         	}
 
@@ -1672,9 +1734,10 @@ InstructionQueue::addIfReady(const DynInstPtr &inst)
     if (inst->readyToIssue()) {
 
        
-	//Although no need as we do not use getspecIssued anywhere, but still handy
-	if(inst->getspecSquashed()) {
-		inst->clearspecIssued();
+	//Because getspecIssued is used to check the in flight instructions, queued for issue instructions are also in flight
+
+	if(inst->get_spec_sched_wakeup()){
+		inst->setspecIssued();
 	}
 
 

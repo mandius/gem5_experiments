@@ -70,10 +70,11 @@ namespace gem5
 namespace o3
 {
 
-IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params)
+IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params, L1HitPredictor *L1pred)
     : issueToExecQueue(params.backComSize, params.forwardComSize),
       cpu(_cpu),
-      instQueue(_cpu, this, params),
+      L1pred_ptr(L1pred),
+      instQueue(_cpu, this, params, L1pred),
       ldstQueue(_cpu, this, params),
       fuPool(params.fuPool),
       commitToIEWDelay(params.commitToIEWDelay),
@@ -87,6 +88,10 @@ IEW::IEW(CPU *_cpu, const BaseO3CPUParams &params)
       numThreads(params.numThreads),
       iewStats(cpu)
 {
+
+    //instQueue.L1pred_ptr(L1pred_ptr);
+
+
     if (dispatchWidth > MaxWidth)
         fatal("dispatchWidth (%d) is larger than compiled limit (%d),\n"
              "\tincrease MaxWidth in src/cpu/o3/limits.hh\n",
@@ -152,8 +157,6 @@ void IEW::spec_sched_wakeup_task(){
 				it = spec_sched_wakeup.erase(it);
 				continue;
 			}
-		} else {		
-			assert(!it->first->getspecSquashed());
 		}		
 
 
@@ -1520,6 +1523,27 @@ IEW::writebackInsts()
 
 	    DPRINTF(DBGCUR, "[LATENCYPRINT] Instruction=%lli isMemref =%0d :: isLoad =%0d :: op_latency=%0d :: opClass =%0d I_to_E_Latency=%ld, E_to_W_latency=%ld\n" , inst->seqNum, inst->isMemRef() , inst->isLoad(), inst->opLatency, inst->opClass(), inst->issue_to_execute_cycles, inst->execute_to_writeback_cycles );
 
+	   if(inst->isLoad()){
+	   	if(inst->execute_to_writeback_cycles<10){
+			if(inst->load_spec_queued) {
+				if(inst->execute_to_writeback_cycles<=5){
+					instQueue.iqIOStats.load_spec_successful++;
+				} else {
+					instQueue.iqIOStats.load_misspec_other++;
+				}
+			}
+
+
+			L1pred_ptr->note_L1_hit(inst->pcState().instAddr());
+	   	} else {
+			if(inst->load_spec_queued){
+				instQueue.iqIOStats.load_misspec_L1miss++;
+			}
+			L1pred_ptr->note_L1_miss(inst->pcState().instAddr());
+
+	   	}
+		inst->load_spec_queued=0;
+	   }
 
             int dependents = instQueue.wakeDependents(inst);
 	    

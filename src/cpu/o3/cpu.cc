@@ -61,6 +61,8 @@
 #include "sim/stat_control.hh"
 #include "sim/system.hh"
 
+
+
 namespace gem5
 {
 
@@ -68,6 +70,7 @@ struct BaseCPUParams;
 
 namespace o3
 {
+
 
 CPU::CPU(const BaseO3CPUParams &params)
     : BaseCPU(params),
@@ -79,11 +82,13 @@ CPU::CPU(const BaseO3CPUParams &params)
 #ifndef NDEBUG
       instcount(0),
 #endif
+
+      L1pred(2048, 8192),
       removeInstsThisCycle(false),
       fetch(this, params),
       decode(this, params),
       rename(this, params),
-      iew(this, params),
+      iew(this, params, &L1pred),
       commit(this, params),
 
       regFile(params.numPhysIntRegs,
@@ -115,6 +120,18 @@ CPU::CPU(const BaseO3CPUParams &params)
       lastRunningCycle(curCycle()),
       cpuStats(this)
 {
+
+    if(params.L1preden==true){
+	L1pred.is_enabled=1;
+    } else {
+	L1pred.is_enabled=0;
+    }
+	
+
+
+    //iew.L1pred_ptr(&L1pred);
+
+
     fatal_if(FullSystem && params.numThreads > 1,
             "SMT is not supported in O3 in full system mode currently.");
 

@@ -69,6 +69,8 @@
 #include "cpu/timebuf.hh"
 #include "params/BaseO3CPU.hh"
 #include "sim/process.hh"
+#include "cpu/o3/L1HitPredictor.hh"
+
 
 namespace gem5
 {
@@ -113,7 +115,13 @@ class CPU : public BaseCPU
     /** Overall CPU status. */
     Status _status;
 
+
+    L1HitPredictor  L1pred ;
+
+
   private:
+
+
 
     /** The tick event used for scheduling CPU ticks. */
     EventFunctionWrapper tickEvent;

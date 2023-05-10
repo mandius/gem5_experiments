@@ -128,6 +128,7 @@ class BaseO3CPU(BaseCPU):
 
 
     spec_sched = Param.Bool(True, "Whether to turn on dependency checking or not");
+    L1preden = Param.Bool(True, "Whether to turn on L1 Hit predictor for spec scheduling");
 
     iewToCommitDelay = Param.Cycles(
         1, "Issue/Execute/Writeback to commit " "delay"

@@ -54,7 +54,7 @@ from caches import *
 import Mybench
 
 # import the SimpleOpts module
-from common import SimpleOpts
+from common import *
 
 # Default to running 'hello', use the compiled ISA to find the binary
 # grab the specific path to the binary
@@ -74,6 +74,8 @@ SimpleOpts.add_option("I2E_delay", nargs="?", default="1")
 
 #adding an option for the max number of instructions to be executed per thread.
 SimpleOpts.add_option("spec_sched", nargs="?", default="True")
+
+SimpleOpts.add_option("L1preden", nargs="?", default="True")
 
 #adding an option for the max number of instructions to be executed per thread.
 SimpleOpts.add_option("maxinsts", nargs="?", default="1000000")
@@ -101,6 +103,7 @@ system.mem_ranges = [AddrRange("1GB")]  # Create an address range
 system.cpu = O3CPU()
 system.cpu.issueToExecuteDelay = args.I2E_delay
 system.cpu.spec_sched = args.spec_sched
+system.cpu.L1preden = args.L1preden
 
 ### Fixed parameters according to the configuration
 system.cpu.LQEntries = 72
@@ -170,6 +173,10 @@ elif args.benchmark == 'soplex':
 	process = Mybench.soplex
 elif args.benchmark == 'test':
 	process = Mybench.test
+elif args.benchmark == 'gromacs':
+	process = Mybench.gromacs
+elif args.benchmark == 'milc':
+	process = Mybench.milc
 
 
 

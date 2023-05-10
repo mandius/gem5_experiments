@@ -116,4 +116,30 @@ soplex.cmd = [soplex.executable] + [IN_ARG, IN_PATH]
 soplex.output = "soplex.out"
 
 
+#gromacs
+B_NAME = "gromacs"
+BINARY_PATH= EXE_ROOT + "gromacs_base.i386-m32-gcc42-nn"
+#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
+IN_PATH = " "
+#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
+IN_ARG = "-silent -deffnm gromacs -nice 0"
+
+gromacs = Process()
+gromacs.executable =  BINARY_PATH
+gromacs.cmd = [gromacs.executable] + [IN_ARG, IN_PATH]
+gromacs.output = "gromacs.out"
+
+#milc
+B_NAME = "milc"
+BINARY_PATH= EXE_ROOT + "milc_base.i386-m32-gcc42-nn"
+#BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/bzip2/bzip2_base.linux32.ia32"
+IN_PATH = DATA_ROOT + B_NAME + "/su3imp.in"
+#IN_PATH = "/home/maninder/Projects/Gem5/spec2006/bzip2/input/input.source"
+IN_ARG = " "
+
+milc = Process()
+milc.executable =  BINARY_PATH
+milc.cmd = [milc.executable] + [IN_ARG, IN_PATH]
+milc.output = "milc.out"
+
 

@@ -56,6 +56,7 @@
 #include "cpu/timebuf.hh"
 #include "debug/IEW.hh"
 #include "sim/probe/probe.hh"
+#include "cpu/o3/L1HitPredictor.hh"
 
 namespace gem5
 {
@@ -132,12 +133,12 @@ class IEW
 
   public:
 
-
+    L1HitPredictor *L1pred_ptr;
     int spec_sched;
     std::list<std::pair<DynInstPtr,int>> spec_sched_wakeup;
 
     /** Constructs a IEW with the given parameters. */
-    IEW(CPU *_cpu, const BaseO3CPUParams &params);
+    IEW(CPU *_cpu, const BaseO3CPUParams &params, L1HitPredictor *L1pred);
 
     /** Returns the name of the IEW stage. */
     std::string name() const;
