@@ -17,39 +17,22 @@ touch log_book
 #build/X86/gem5.opt  --debug-flags=IEW configs/ECE_752_project/two_level.py   bzip2  5
 #echo "bzip2   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
 
-echo "=============================         With Spec Sched without filtering  ==============================" >> log_book
-build/X86/gem5.fast     configs/ECE_752_project/two_level.py $1 4 True False 120000000  
+echo "=============================         Without Spec Sched without filtering  ==============================" >> log_book
+build/X86/gem5.fast     configs/ECE_752_project/two_level.py $1 4 False False 100000000
 ./extract_logs >> log_book
 
 
-#echo "`grep  simTicks  m5out/stats.txt`"   >> log_book
-#echo "`grep  system.cpu.ipc m5out/stats.txt`" >> log_book
-#echo "`grep  load_spec_queued  m5out/stats.txt`"   >> log_book
-#echo "`grep  load_spec_successful  m5out/stats.txt`"   >> log_book	
-#echo "`grep  load_misspec_other	  m5out/stats.txt`"   >> log_book
-#echo "`grep  load_misspec_L1miss   m5out/stats.txt`"   >> log_book
-#echo "`grep  load_latencies        m5out/stats.txt`"  >> log_book
-#echo "`grep  replayed_instructions m5out/stats.txt`"  >> log_book
+echo "=============================         With Spec Sched without filtering  ==============================" >> log_book
+build/X86/gem5.fast     configs/ECE_752_project/two_level.py $1 4 True False 100000000
+./extract_logs >> log_book
 
-
-
-
-rm -rf m5out/out_enabled
-cat m5out/test.out > m5out/out_enabled
 
 echo "=============================         With Spec Sched with filtering  ==============================" >> log_book
-build/X86/gem5.fast   configs/ECE_752_project/two_level.py $1 4 True True  120000000 
+build/X86/gem5.fast   configs/ECE_752_project/two_level.py $1 4 True True  100000000
 
 ./extract_logs >> log_book
 
-#echo "`grep  simTicks  m5out/stats.txt`"   >> log_book
-#echo "`grep  system.cpu.ipc m5out/stats.txt`" >> log_book
-#echo "`grep  load_spec_queued  m5out/stats.txt`"   >> log_book
-#echo "`grep  load_spec_successful  m5out/stats.txt`"   >> log_book	
-#echo "`grep  load_misspec_other	  m5out/stats.txt`"   >> log_book
-#echo "`grep  load_misspec_L1miss   m5out/stats.txt`"   >> log_book
-#echo "`grep  load_latencies        m5out/stats.txt`"  >> log_book
-#echo "`grep  replayed_instructions m5out/stats.txt`"  >> log_book
+
 
 
 
@@ -57,10 +40,7 @@ build/X86/gem5.fast   configs/ECE_752_project/two_level.py $1 4 True True  12000
 #build/X86/gem5.debug  --debug-flags=DBGCUR  configs/ECE_752_project/two_level.py  test 4 False
 #echo "test   `grep -e system.cpu.ipc -e simTicks -e system.cpu.spec_woken_insts -e system.cpu.spec_squash_insts -e system.cpu.successful_spec_insts  m5out/stats.txt`"   >> log_book
 
-rm -rf m5out/out_disabled
-cat m5out/test.out > m5out/out_disabled
 
-diff m5out/out_enabled m5out/out_disabled
 #
 #--debug-flags=O3CPUAll
 

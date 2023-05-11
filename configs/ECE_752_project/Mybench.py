@@ -29,15 +29,14 @@ from common import SimpleOpts
 #Test
 
 test = Process()
-test.executable = GEM5_CONFIG + '/' +"test"
-test.cmd = [test.executable]
-test.output = 'test.out'
-
+test.executable = GEM5_CONFIG + '/' +"test" 
+test.cmd = [test.executable] + ["/home/maninder/Projects/Gem5/spec_execs/data/in_file"]
+test.input =  "/home/maninder/Projects/Gem5/spec_execs/data/in_file"
 #401.bzip2
 B_NAME = "bzip2"
 BINARY_PATH= EXE_ROOT + "bzip2_base.i386-m32-gcc42-nn"
-IN_PATH = DATA_ROOT + B_NAME +  "/input.source"
-IN_ARG = "280"
+IN_PATH =  DATA_ROOT + B_NAME +  "/input.source"
+IN_ARG = " 280"
 
 bzip2 = Process()
 bzip2.executable =  BINARY_PATH
@@ -70,31 +69,36 @@ gamess.output = "gamess.out"
 
 #gobmk
 B_NAME = "gobmk"
-BINARY_PATH= EXE_ROOT + "gobmk_base.i386-m32-gcc42-nn"
+BINARY_PATH= EXE_ROOT + "gobmk_base.linux32.ia32"
+
 IN_PATH = DATA_ROOT + B_NAME +  "/13x13.tst"
-IN_ARG = ""
+IN_PATH = "/home/maninder/Projects/Gem5/spec2006/gobmk/score2.tst"
+IN_ARG =  "-opts --quiet --mode gtp"
+
 
 gobmk = Process()
 gobmk.executable =  BINARY_PATH
-gobmk.cmd = [gobmk.executable] + [IN_PATH]
+gobmk.cmd = [gobmk.executable] + [IN_ARG]
+gobmk.input = IN_PATH
 gobmk.output = "gobmk.out"
 
 
 #GemsFDTD
 B_NAME = "GemsFDTD"
-BINARY_PATH= EXE_ROOT + "GemsFDTD_base.i386-m32-gcc42-nn"
+#BINARY_PATH= EXE_ROOT + "GemsFDTD_base.i386-m32-gcc42-nn"
+BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/GemsFDTD/GemsFDTD_base.x86_64_sse"
 IN_PATH = ""
 IN_ARG = "/"
 
 GemsFDTD = Process()
 GemsFDTD.executable =  BINARY_PATH
-GemsFDTD.cmd = [GemsFDTD.executable] + [IN_PATH]
+GemsFDTD.cmd = [GemsFDTD.executable] + [IN_ARG]
 GemsFDTD.output = "GemsFDTD.out"
 
 
 #soplex
 B_NAME = "soplex"
-BINARY_PATH= EXE_ROOT + "soplex_base.i386-m32-gcc42-nn"
+BINARY_PATH= EXE_ROOT + "soplex_base.x86_64_sse"
 IN_PATH = DATA_ROOT+B_NAME+"/pds-50.mps"
 IN_ARG = "-sl -e -m45000"
 
@@ -106,7 +110,8 @@ soplex.output = "soplex.out"
 
 #gromacs
 B_NAME = "gromacs"
-BINARY_PATH= EXE_ROOT + "gromacs_base.i386-m32-gcc42-nn"
+#BINARY_PATH= EXE_ROOT + "gromacs_base.i386-m32-gcc42-nn"
+BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/gromacs/gromacs_base.linux32.ia32"
 IN_PATH = " "
 IN_ARG = "-silent -deffnm gromacs -nice 0"
 
@@ -119,11 +124,12 @@ gromacs.output = "gromacs.out"
 B_NAME = "milc"
 BINARY_PATH= EXE_ROOT + "milc_base.i386-m32-gcc42-nn"
 IN_PATH = DATA_ROOT + B_NAME + "/su3imp.in"
-IN_ARG = " "
+
 
 milc = Process()
 milc.executable =  BINARY_PATH
-milc.cmd = [milc.executable] + [IN_ARG, IN_PATH]
+milc.cmd = [milc.executable] 
+milc.input = IN_PATH
 milc.output = "milc.out"
 
 
@@ -140,13 +146,14 @@ mcf.output = "mcf.out"
 
 #leslie3d
 B_NAME = "leslie3d"
-BINARY_PATH= EXE_ROOT + "leslie3d_base.i386-m32-gcc42-nn"
+BINARY_PATH= EXE_ROOT + "leslie3d_base.x86_64_sse"
 IN_PATH = DATA_ROOT+B_NAME+ "/leslie3d.in"
 IN_ARG = ""
 
 leslie3d = Process()
 leslie3d.executable =  BINARY_PATH
-leslie3d.cmd = [leslie3d.executable] + [IN_ARG, IN_PATH]
+leslie3d.cmd = [leslie3d.executable] + [IN_PATH] 
+leslie3d.input = IN_PATH
 leslie3d.output = "leslie3d.out"
 
 
@@ -154,11 +161,11 @@ leslie3d.output = "leslie3d.out"
 B_NAME = "namd"
 BINARY_PATH= EXE_ROOT + "namd_base.i386-m32-gcc42-nn"
 IN_PATH = DATA_ROOT+B_NAME+ "/namd.input"
-IN_ARG = ""
+IN_ARG = " --input "+ IN_PATH+ " --iterations 38 "
 
 namd = Process()
 namd.executable =  BINARY_PATH
-namd.cmd = [namd.executable] + [IN_ARG, IN_PATH]
+namd.cmd = [namd.executable] + [IN_ARG]
 namd.output = "namd.out"
 
 
@@ -176,14 +183,15 @@ povray.output = "povray.out"
 
 
 #hmmer
-B_NAME = "povray"
+B_NAME = "hmmer"
 BINARY_PATH= EXE_ROOT + "hmmer_base.i386-m32-gcc42-nn"
 IN_PATH = DATA_ROOT+B_NAME+ "/nph3.hmm"
+IN_PATH2 = DATA_ROOT+B_NAME+ "/swiss41"
 IN_ARG = ""
 
 hmmer = Process()
 hmmer.executable =  BINARY_PATH
-hmmer.cmd = [hmmer.executable] + [IN_ARG, IN_PATH]
+hmmer.cmd = [hmmer.executable] + [IN_PATH] + [IN_PATH2]
 hmmer.output = "hmmer.out"
 
 
@@ -215,12 +223,13 @@ h264ref.output = "h264ref.out"
 #lbm
 B_NAME = "lbm"
 BINARY_PATH= EXE_ROOT + "lbm_base.i386-m32-gcc42-nn"
-IN_PATH = DATA_ROOT+B_NAME+ "/refrence.dat"
-IN_ARG = ""
+BINARY_PATH= "/home/maninder/Projects/Gem5/spec2006/lbm/lbm_base.x86_64_sse"
+IN_PATH = DATA_ROOT+B_NAME+ "/100_100_130_ldc.of]"
+IN_ARG = "3000 reference.dat 0 0 [" + IN_PATH 
 
 lbm = Process()
 lbm.executable =  BINARY_PATH
-lbm.cmd = [lbm.executable] + [IN_ARG, IN_PATH]
+lbm.cmd = [lbm.executable] + [IN_ARG] 
 lbm.output = "lbm.out"
 
 
@@ -232,7 +241,7 @@ IN_ARG = ""
 
 omnetpp = Process()
 omnetpp.executable =  BINARY_PATH
-omnetpp.cmd = [omnetpp.executable] + [IN_ARG, IN_PATH]
+omnetpp.cmd = [omnetpp.executable] + [IN_PATH]
 omnetpp.output = "omnetpp.out"
 
 
