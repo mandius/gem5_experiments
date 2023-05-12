@@ -5,7 +5,7 @@ int main()
     int number,i,j;
     
 
-    number = 2000;
+    number = 100000;
 
     int primes[number+1];
 

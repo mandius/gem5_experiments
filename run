@@ -18,17 +18,17 @@ touch log_book
 #echo "bzip2   `grep -e system.cpu.ipc   m5out/stats.txt`" >> log
 
 echo "=============================         Without Spec Sched without filtering  ==============================" >> log_book
-build/X86/gem5.fast     configs/ECE_752_project/two_level.py $1 4 False False 100000000
+build/X86/gem5.fast     configs/ECE_752_project/two_level.py test 4 False False 50000000
 ./extract_logs >> log_book
 
 
 echo "=============================         With Spec Sched without filtering  ==============================" >> log_book
-build/X86/gem5.fast     configs/ECE_752_project/two_level.py $1 4 True False 100000000
+build/X86/gem5.fast     configs/ECE_752_project/two_level.py test 4 True False 50000000
 ./extract_logs >> log_book
 
 
 echo "=============================         With Spec Sched with filtering  ==============================" >> log_book
-build/X86/gem5.fast   configs/ECE_752_project/two_level.py $1 4 True True  100000000
+build/X86/gem5.fast   configs/ECE_752_project/two_level.py test 4 True True  50000000
 
 ./extract_logs >> log_book
 
