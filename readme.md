@@ -1,3 +1,6 @@
+
+
+
 #To Build the Gem5:
 
 1. scons build/X86/gem5.fast
@@ -13,4 +16,4 @@ source setup.csh
 ./run 
 
 #Key results are captured in the file <log_book>
-
+#Project Report =>  Final_Report.pdf
